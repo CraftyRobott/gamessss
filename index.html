@@ -326,7 +326,7 @@ function drawElement(e,d,inst,other,sx,sy,scale){
  if(e.type==="text"){
   var txt=expand(e.text,d,inst,e),align=e.align==="center"?1:e.align==="right"?2:0;
   draw_set_font(global.gmlfnt_small_flex);draw_set_halign(align);draw_set_valign(1);
-  var fs=Math.max(.1,Number(e.fontSize||20)/20)*scale;
+  var fs=Math.max(.1,Number(e.fontSize||20)/20)*scale*(global.gmlhd_fonts?0.25:1);
   var tx=e.align==="center"?x+w/2:e.align==="right"?x+w:x;
   draw_text_transformed(tx,y+h/2,txt,fs,fs,0);
  }else if(e.type==="line"){
@@ -335,7 +335,7 @@ function drawElement(e,d,inst,other,sx,sy,scale){
   draw_set_color(color(e.stroke||e.fill||"#FFFFFF",inst,other));
   for(var i=1;i<e.points.length;i++){var p=e.points[i-1],q=e.points[i];draw_line_width(sx+p[0]*scale,sy+p[1]*scale,sx+q[0]*scale,sy+q[1]*scale,Math.max(1,Number(e.strokeWidth||3)*scale))}
  }else if(e.type==="ellipse"){
-  draw_ellipse_colour(x,y,x+w,y+h,col,col,col,col,0);
+  draw_ellipse_colour(x,y,x+w,y+h,col,col,0);
   if(Number(e.strokeWidth)>0){draw_set_color(color(e.stroke,inst,other));draw_ellipse(x,y,x+w,y+h,1)}
  }else if(e.type==="rect"||e.type==="roundrect"){
   draw_rectangle_colour(x,y,x+w,y+h,col,col,col,col,0);
