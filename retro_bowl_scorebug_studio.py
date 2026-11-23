@@ -480,9 +480,33 @@ class Studio:
         for col in range(3):
             align_box.columnconfigure(col, weight=1)
 
+        scale_box = ttk.LabelFrame(left, text="Proportional scale", padding=5)
+        scale_box.pack(fill="x", pady=(4, 3))
+        ttk.Label(
+            scale_box,
+            text="Scale selected layers together (%)"
+        ).pack(anchor="w")
+        scale_row = ttk.Frame(scale_box)
+        scale_row.pack(fill="x", pady=(3, 0))
+        self.scale_percent_var = tk.StringVar(value="100")
+        ttk.Entry(
+            scale_row, textvariable=self.scale_percent_var, width=7
+        ).pack(side="left", padx=(0, 4))
+        ttk.Button(
+            scale_row, text="Apply", command=self.scale_selection
+        ).pack(side="left", expand=True, fill="x")
+        quick_row = ttk.Frame(scale_box)
+        quick_row.pack(fill="x", pady=(3, 0))
+        ttk.Button(
+            quick_row, text="−10%", command=lambda: self.scale_by(0.9)
+        ).pack(side="left", expand=True, fill="x", padx=(0, 2))
+        ttk.Button(
+            quick_row, text="+10%", command=lambda: self.scale_by(1.1)
+        ).pack(side="left", expand=True, fill="x", padx=(2, 0))
+
         ttk.Label(
             left,
-            text="Select a layer, then drag it on the preview to reposition it.",
+            text="Select one or more layers. Drag to move, or use Proportional scale to resize around the selection's center.",
             wraplength=230
         ).pack(anchor="w", pady=8)
         # CENTER: Preview
@@ -772,6 +796,58 @@ class Studio:
             updates[i] = (x, y)
             cursor += float(e.get(dimension, 0)) + gap
         self.apply_positions(updates, "Distributed selected layers.")
+
+    def scale_by(self, factor):
+        """Scale the current selection by a relative factor."""
+        self.scale_percent_var.set(str(round(factor * 100, 2)))
+        self.scale_selection()
+
+    def scale_selection(self):
+        """Scale layer geometry and visual weights around the selection center."""
+        indices = self.get_selection()
+        if not indices:
+            self.status.set("Select at least one layer to scale.")
+            return
+        try:
+            factor = float(self.scale_percent_var.get().strip()) / 100.0
+        except (TypeError, ValueError):
+            messagebox.showerror("Invalid scale", "Enter a scale percentage, such as 80 or 125.")
+            return
+        if not 0.01 <= factor <= 100:
+            messagebox.showerror("Invalid scale", "Scale must be between 1% and 10000%.")
+            return
+        items = [self.elements[i] for i in indices]
+        left = min(float(e.get("x", 0)) for e in items)
+        top = min(float(e.get("y", 0)) for e in items)
+        right = max(float(e.get("x", 0)) + float(e.get("w", 0)) for e in items)
+        bottom = max(float(e.get("y", 0)) + float(e.get("h", 0)) for e in items)
+        center_x = (left + right) / 2.0
+        center_y = (top + bottom) / 2.0
+
+        for e in items:
+            x = float(e.get("x", 0))
+            y = float(e.get("y", 0))
+            e["x"] = round(center_x + (x - center_x) * factor, 2)
+            e["y"] = round(center_y + (y - center_y) * factor, 2)
+            for key in ("w", "h", "width", "font_scale"):
+                if key not in e:
+                    continue
+                value = float(e[key]) * factor
+                if key in ("w", "h"):
+                    # Keep ordinary shapes usable; zero-height/width lines stay zero.
+                    original = float(e[key])
+                    value = max(1.0, value) if original > 0 else 0.0
+                elif key == "width":
+                    value = max(0.0, value)
+                else:
+                    value = max(0.05, value)
+                e[key] = round(value, 3)
+
+        self.status.set(
+            f"Scaled {len(indices)} layer(s) to {factor * 100:g}% around selection center."
+        )
+        self.properties()
+        self.preview()
 
     def properties(self):
         for w in self.props.winfo_children():
