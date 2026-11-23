@@ -155,12 +155,12 @@ function render(){
 }
 let imageCache=new Map();
 function renderLayers(){
- const box=$('layers');box.innerHTML='';let groups=[...new Set(els.map(e=>e.group).filter(Boolean))];
+ const box=$('layers');box.innerHTML='';let groups=[...new Set(els.map(e=>e.group).filter(Boolean))],shownGroups=new Set();
  // Visual layer order is bottom-to-top in the data; list shows top-to-bottom.
  [...els].map((e,i)=>({e,i})).reverse().forEach(({e,i})=>{
-  if(e.group&&groups.includes(e.group)&&!e._groupHeaderShown){
+  if(e.group&&groups.includes(e.group)&&!shownGroups.has(e.group)){
    let header=document.createElement('div');header.className='layer-row group';header.innerHTML='<span>▾</span><span class="name"></span><span class="pill">GROUP</span>';
-   header.querySelector('.name').textContent=e.group;header.onclick=()=>{selected=els.filter(x=>x.group===e.group).map(x=>x.id);render()};box.appendChild(header);e._groupHeaderShown=true;
+   header.querySelector('.name').textContent=e.group;header.onclick=()=>{selected=els.filter(x=>x.group===e.group).map(x=>x.id);render()};box.appendChild(header);shownGroups.add(e.group);
   }
   let row=document.createElement('div');row.className='layer-row'+(selected.includes(e.id)?' sel':'')+(e.locked?' locked':'')+(e.group?' child':'');
   let vis=document.createElement('button');vis.className='mini';vis.textContent=e.visible===false?'◌':'◉';vis.title='Toggle visibility';vis.onclick=ev=>{ev.stopPropagation();snapshot();e.visible=e.visible===false;render()};
@@ -168,7 +168,7 @@ function renderLayers(){
   let nm=document.createElement('span');nm.className='name';nm.textContent=e.name||e.type;
   let type=document.createElement('span');type.className='pill';type.textContent=e.type;
   row.append(vis,lock,nm,type);row.onclick=ev=>{if(ev.ctrlKey||ev.metaKey||ev.shiftKey){selected=selected.includes(e.id)?selected.filter(x=>x!==e.id):[...selected,e.id]}else selected=[e.id];render()};
-  box.appendChild(row);e._groupHeaderShown=false;
+  box.appendChild(row);
  });
 }
 function inspector(){
@@ -209,7 +209,7 @@ c.addEventListener('pointerdown',ev=>{
 });
 c.addEventListener('pointermove',ev=>{let p=point(ev);$('position').textContent='X: '+Math.round(p.x)+' Y: '+Math.round(p.y);if(!drag)return;
  if(drag.kind==='move'){let dx=p.x-drag.start.x,dy=p.y-drag.start.y;drag.orig.forEach(o=>{let z=els.find(q=>q.id===o.id);if(z&&!z.locked){z.x=snap(o.x+dx);z.y=snap(o.y+dy)}})}
- if(drag.kind==='draw'){drag.e.w=snap(p.x)-drag.e.x;drag.e.h=snap(p.y)-drag.e.y}
+ if(drag.kind==='draw'){let x0=drag.start.x,y0=drag.start.y,x1=snap(p.x),y1=snap(p.y);if(drag.e.type==='line'){drag.e.x=x0;drag.e.y=y0;drag.e.w=x1-x0;drag.e.h=y1-y0}else{drag.e.x=Math.min(x0,x1);drag.e.y=Math.min(y0,y1);drag.e.w=Math.abs(x1-x0);drag.e.h=Math.abs(y1-y0)}}
  if(drag.kind==='resize'){drag.e.w=Math.max(2,snap(drag.orig.w+p.x-drag.start.x));drag.e.h=Math.max(2,snap(drag.orig.h+p.y-drag.start.y))}
  if(drag.kind==='pen'){drag.e.points.push([p.x,p.y]);let xs=drag.e.points.map(q=>q[0]),ys=drag.e.points.map(q=>q[1]);drag.e.x=Math.min(...xs);drag.e.y=Math.min(...ys);drag.e.w=Math.max(...xs)-drag.e.x;drag.e.h=Math.max(...ys)-drag.e.y}
  render()
@@ -245,7 +245,7 @@ function download(name,content,mime){let a=document.createElement('a'),u=URL.cre
 $('save').onclick=()=>download('scorebug-project.json',JSON.stringify(exportProject(),null,2),'application/json');
 $('export').onclick=()=>{let spec='// Retro Bowl Scorebug Studio — editable design specification\n// Includes gradients, layers, groups, geometry, and appearance.\nconst SCOREBUG_SPEC = '+JSON.stringify(exportProject(),null,2)+';\n';download('scorebug-spec.js',spec,'text/javascript');toast('Exported JS design specification')};
 $('open').onclick=()=>{let inp=document.createElement('input');inp.type='file';inp.accept='.json,application/json';inp.onchange=()=>{let f=inp.files[0];if(!f)return;let rd=new FileReader();rd.onload=()=>{try{let obj=JSON.parse(rd.result);els=(obj.elements||obj.layers||[]).map((e,i)=>normalize(e,i));let cv=obj.canvas;if(Array.isArray(cv)){c.width=cv[0]||732;c.height=cv[1]||338}else if(cv){c.width=cv.width||732;c.height=cv.height||338}$('cw').value=c.width;$('ch').value=c.height;selected=[];history=[];future=[];render();syncInspector();toast('Project imported')}catch(err){alert('Could not open project: '+err.message)}};rd.readAsText(f)};inp.click()};
-function normalize(e,i){let n=clone(e);n.id=n.id||uid();n.name=n.name||'Layer '+(i+1);n.x=Number(n.x)||0;n.y=Number(n.y)||0;n.w=Number(n.w)||0;n.h=Number(n.h)||0;n.opacity=n.opacity??(n.alpha!==undefined?n.alpha*100:100);n.stroke=n.stroke||n.outline||'#ffffff';n.strokeWidth=n.strokeWidth??n.width??0;n.fill=n.fill||n.color||'#ffffff';n.type=n.type==='roundrect'?'roundrect':n.type||'rect';if(n.font_scale!==undefined)n.fontSize=10*n.font_scale;if(n.color_mode==='Away team')n.fillMode='away';if(n.color_mode==='Home team')n.fillMode='home';if(n.fill_mode==='Away team')n.fillMode='away';if(n.fill_mode==='Home team')n.fillMode='home';if(n.type==='text'){n.weight=n.weight||700;n.font=n.font||'Arial';n.fontSize=n.fontSize||24}return n}
+function normalize(e,i){let n=clone(e);n.id=n.id||uid();n.name=n.name||'Layer '+(i+1);if(n.type==='image'&&n.src){let im=new Image();im.onload=()=>render();im.src=n.src;imageCache.set(n.id,im)}n.x=Number(n.x)||0;n.y=Number(n.y)||0;n.w=Number(n.w)||0;n.h=Number(n.h)||0;n.opacity=n.opacity??(n.alpha!==undefined?n.alpha*100:100);n.stroke=n.stroke||n.outline||'#ffffff';n.strokeWidth=n.strokeWidth??n.width??0;n.fill=n.fill||n.color||'#ffffff';n.type=n.type==='roundrect'?'roundrect':n.type||'rect';if(n.font_scale!==undefined)n.fontSize=10*n.font_scale;if(n.color_mode==='Away team')n.fillMode='away';if(n.color_mode==='Home team')n.fillMode='home';if(n.fill_mode==='Away team')n.fillMode='away';if(n.fill_mode==='Home team')n.fillMode='home';if(n.type==='text'){n.weight=n.weight||700;n.font=n.font||'Arial';n.fontSize=n.fontSize||24}return n}
 $('imageFile').onchange=ev=>{let f=ev.target.files[0];if(!f)return;let rd=new FileReader();rd.onload=()=>{let id=uid(),im=new Image();im.onload=()=>{imageCache.set(id,im);snapshot();els.push({id,name:f.name,type:'image',src:rd.result,x:100,y:80,w:Math.min(180,im.width),h:Math.min(120,im.height),opacity:100,visible:true,locked:false});selected=[id];syncInspector()};im.src=rd.result};rd.readAsDataURL(f);ev.target.value=''};
 $('importImage').onclick=()=>$('imageFile').click();
 $('new').onclick=()=>{if(confirm('Start a new blank scorebug?')){snapshot();els=[];selected=[];syncInspector()}};
@@ -257,7 +257,7 @@ $('zoom').oninput=()=>{zoom=Number($('zoom').value)/100;$('zoomLabel').textConte
 function setZoom(z){zoom=Math.max(.4,Math.min(2.2,z));$('zoom').value=Math.round(zoom*100);$('zoomLabel').textContent=$('zoom').value+'%';c.style.width=(c.width*zoom)+'px';c.style.height=(c.height*zoom)+'px'}
 $('zoomIn').onclick=()=>setZoom(zoom+.1);$('zoomOut').onclick=()=>setZoom(zoom-.1);$('fit').onclick=()=>setZoom(1);$('center').onclick=()=>{let e=els.find(x=>x.id===selected[0]);if(e){e.x=Math.round((c.width-e.w)/2);e.y=Math.round((c.height-e.h)/2);syncInspector()}};
 $('duplicate').onclick=duplicate;$('delete').onclick=deleteSelected;$('up').onclick=()=>moveLayer(1);$('down').onclick=()=>moveLayer(-1);$('front').onclick=()=>{snapshot();let a=els.filter(e=>selected.includes(e.id)),b=els.filter(e=>!selected.includes(e.id));els=[...b,...a];syncInspector()};$('back').onclick=()=>{snapshot();let a=els.filter(e=>selected.includes(e.id)),b=els.filter(e=>!selected.includes(e.id));els=[...a,...b];syncInspector()};
-$('group').onclick=groupSelected;$('ungroup').onclick=ungroup;$('addGroup').onclick=()=>{snapshot();let id='Group '+(++groupCounter);let e={id:uid(),name:id+' placeholder',type:'rect',x:10,y:10,w:1,h:1,fill:'transparent',opacity:0,visible:false,locked:true,group:id};els.push(e);selected=[e.id];syncInspector();toast('Created group; select layers and Group selected to populate it')};
+$('group').onclick=groupSelected;$('ungroup').onclick=ungroup;$('addGroup').onclick=()=>{if(!selected.length){toast('Select layers first, then create a group');return}groupSelected()};
 $('alignLeft').onclick=()=>align('left');$('alignCenter').onclick=()=>align('center');$('alignRight').onclick=()=>align('right');$('alignTop').onclick=()=>align('top');$('alignMiddle').onclick=()=>align('middle');$('alignBottom').onclick=()=>align('bottom');
 $('samplePreset').onchange=()=>{data=clone(samples[$('samplePreset').value]);render()};
 $('tokens').innerHTML=TOKENS.map(k=>'<button data-token="{'+k+'}">{'+k+'}</button>').join('');$('tokens').querySelectorAll('button').forEach(b=>b.onclick=()=>{$('textContent').value+=b.dataset.token;let e=els.find(x=>x.id===selected[selected.length-1]);if(e&&e.type==='text'){snapshot();e.text=$('textContent').value;render()}});
