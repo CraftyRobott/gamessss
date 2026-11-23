@@ -1,6 +1,6 @@
 # Retro Bowl Scorebug Studio
 
-A visual editor for designing custom Retro Bowl scorebugs and exporting structured JavaScript specifications for conversion into game mods.
+A visual editor for designing custom Retro Bowl scorebugs and exporting executable JavaScript mods for the Retro Bowl College mod loader.
 
 ## Browser editor (new)
 
@@ -19,9 +19,11 @@ You can also run it locally by opening `index.html` in a modern browser. There i
 - Score count-up animation settings for selected Away/Home score layers: enable/disable, duration, count style, easing, and an in-editor preview
 - Opacity, stroke, shadows, and per-layer styling
 - Undo/redo history and keyboard shortcuts
-- Import existing Studio JSON projects; export editable JSON or a JavaScript design specification
+- Import existing Studio JSON projects; export editable JSON, a design specification, or an executable game mod
 
-**Export note:** The JavaScript export is a design specification, not yet a fully generated Retro Bowl runtime mod. It preserves the design details (including gradients, layers, and per-score animation settings) so they can be translated into the game's drawing API without guessing from screenshots. The browser editor uses Lilita One as a close visual match; it does not redistribute a proprietary game font file.
+**Game mod export:** Use **Export Game Mod** to download `custom_scorebug.js`. Put that file in `engine/mods/` in your Retro Bowl College installation and let the existing mod loader discover it. The mod waits for the game's `gml_Script_s_draw_scoreboard` function, then replaces the default scoreboard drawing with the exported layout. Use **Export spec** only when you want the editable design data; that file is not a game mod.
+
+The generated runtime mod currently supports text/tokens, solid rectangles, ellipses, lines, freehand strokes, team-uniform colors and shades, and score count-up settings. The game uses its own HUD font; the editor's Lilita One preview font is not embedded in the mod. Rounded rectangles currently render as regular rectangles, gradients render as their base fill color, and imported image layers are skipped with a console warning. Test in your specific Retro Bowl College build; this exporter targets the scoreboard hook and drawing functions found in the supplied game source and is not guaranteed compatible with other versions.
 
 ## Desktop editor
 

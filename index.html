@@ -35,7 +35,7 @@ details summary{cursor:pointer;color:#cbd5e1;font-size:11px;font-weight:700;padd
 </style></head>
 <body>
 <header><div class="brand">RETRO BOWL <b>SCOREBUG STUDIO</b></div><span class="pill">WEB EDITION · EXPERIMENTAL</span><div class="top-actions">
-<button id="new">New</button><button id="open">Open project</button><button id="save">Save project</button><button id="undo">↶ Undo</button><button id="redo">↷ Redo</button><span class="sep"></span><button class="primary" id="export">Export JS spec</button>
+<button id="new">New</button><button id="open">Open project</button><button id="save">Save project</button><button id="undo">↶ Undo</button><button id="redo">↷ Redo</button><span class="sep"></span><button id="exportSpec">Export spec</button><button class="primary" id="export">Export Game Mod</button>
 </div></header>
 <main>
 <aside class="left">
@@ -68,6 +68,8 @@ details summary{cursor:pointer;color:#cbd5e1;font-size:11px;font-weight:700;padd
 <aside class="right">
 <div><h3>Properties</h3><div id="inspector" class="panel"><p class="muted">Select a layer to edit its properties.</p></div>
 <div class="panel"><h3>Fill & effects</h3><div class="field"><label>Fill type</label><select id="fillType"><option value="solid">Solid</option><option value="linear">Linear gradient</option><option value="radial">Radial gradient</option></select></div>
+<div class="field"><label>Fill source</label><select id="fillSource"><option value="fixed">Custom color</option><option value="away">Away team color</option><option value="home">Home team color</option></select></div>
+<div class="field"><label>Team color shade <b id="teamShadeLabel">0</b></label><input id="teamShade" type="range" min="-80" max="80" value="0"><p class="muted">Negative darkens; positive lightens. Team colors update when the matchup changes.</p></div>
 <div id="solidControls" class="field"><label>Fill color</label><input id="fillColor" type="color" value="#253e63"></div>
 <div id="gradientControls" hidden><div class="row"><div class="field"><label>Start</label><input id="gradA" type="color" value="#164a83"></div><div class="field"><label>End</label><input id="gradB" type="color" value="#071322"></div></div>
 <div class="field"><label>Angle <b id="angleLabel">0°</b></label><input id="gradAngle" type="range" min="0" max="360" value="0"></div>
@@ -117,11 +119,13 @@ function updateHistory(){$('undo').disabled=!history.length;$('redo').disabled=!
 function undo(){if(!history.length)return;future.push(JSON.stringify({els,selected,groupCounter}));let s=JSON.parse(history.pop());els=s.els;selected=s.selected;groupCounter=s.groupCounter;render()}
 function redo(){if(!future.length)return;history.push(JSON.stringify({els,selected,groupCounter}));let s=JSON.parse(future.pop());els=s.els;selected=s.selected;groupCounter=s.groupCounter;render()}
 function val(el,k,d){return el&&el[k]!==undefined?el[k]:d}
-function colorFor(e){let mode=e.fillMode||'fixed';if(mode==='away')return data.away_color;if(mode==='home')return data.home_color;return e.fill||'#ffffff'}
+function shadeColor(hex,amount){let h=String(hex||'#ffffff').replace('#','');if(h.length===3)h=h.split('').map(x=>x+x).join('');let n=parseInt(h,16);if(!Number.isFinite(n))return hex;let t=amount<0?0:255,p=Math.min(1,Math.abs(amount)/100);let r=(n>>16)&255,g=(n>>8)&255,b=n&255;return '#'+[r,g,b].map(v=>Math.round(v+(t-v)*p).toString(16).padStart(2,'0')).join('')}
+function teamBase(e){return e.fillMode==='away'?data.away_color:e.fillMode==='home'?data.home_color:null}
+function colorFor(e){let base=teamBase(e);return base?shadeColor(base,Number(e.teamShade)||0):(e.fill||'#ffffff')}
 function expanded(s){return String(s||'').replace(/\{([a-z_]+)\}/gi,(m,k)=>data[k]===undefined?m:data[k])}
 function gradient(e,x,y,w,h){
  const g=e.gradient;if(!g)return colorFor(e);
- let a=g.a||e.fill||'#fff',b=g.b||'#111';
+ let base=teamBase(e),shade=Number(e.teamShade)||0,a=base?shadeColor(base,shade+28):(g.a||e.fill||'#fff'),b=base?shadeColor(base,shade-38):(g.b||'#111');
  let grad;
  if(g.type==='radial'){grad=ctx.createRadialGradient(x+w/2,y+h/2,0,x+w/2,y+h/2,Math.max(w,h)*.7)}
  else{let rad=(Number(g.angle)||0)*Math.PI/180,dx=Math.cos(rad)*w/2,dy=Math.sin(rad)*h/2;grad=ctx.createLinearGradient(x+w/2-dx,y+h/2-dy,x+w/2+dx,y+h/2+dy)}
@@ -146,9 +150,9 @@ function render(){
   let fill=gradient(e,e.x,e.y,e.w,e.h);ctx.fillStyle=fill;ctx.strokeStyle=e.stroke||'transparent';ctx.lineWidth=Number(e.strokeWidth||0);
   if(e.type==='ellipse'){ctx.beginPath();ctx.ellipse(e.x+e.w/2,e.y+e.h/2,Math.abs(e.w/2),Math.abs(e.h/2),0,0,Math.PI*2)}else if(e.type==='roundrect')pathRound(e.x,e.y,e.w,e.h,e.radius||8);else{ctx.beginPath();ctx.rect(e.x,e.y,e.w,e.h)}
   ctx.fill();if(ctx.lineWidth)ctx.stroke();
- }else if(e.type==='line'){ctx.strokeStyle=e.fill||e.stroke||'#fff';ctx.lineWidth=Number(e.strokeWidth||2);ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(e.x+e.w,e.y+e.h);ctx.stroke()}
- else if(e.type==='pen'){ctx.strokeStyle=e.fill||'#fff';ctx.lineWidth=Number(e.strokeWidth||3);ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();(e.points||[]).forEach((p,j)=>j?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke()}
- else if(e.type==='text'){ctx.shadowColor=e.textShadow?'#000':'transparent';ctx.shadowBlur=e.textShadow?Number(e.textShadowBlur||3):0;ctx.fillStyle=e.fill||'#fff';drawText(e)}
+ }else if(e.type==='line'){ctx.strokeStyle=colorFor(e);ctx.lineWidth=Number(e.strokeWidth||2);ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(e.x+e.w,e.y+e.h);ctx.stroke()}
+ else if(e.type==='pen'){ctx.strokeStyle=colorFor(e);ctx.lineWidth=Number(e.strokeWidth||3);ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();(e.points||[]).forEach((p,j)=>j?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke()}
+ else if(e.type==='text'){ctx.shadowColor=e.textShadow?'#000':'transparent';ctx.shadowBlur=e.textShadow?Number(e.textShadowBlur||3):0;ctx.fillStyle=colorFor(e);drawText(e)}
  else if(e.type==='image'&&e.src){let im=imageCache.get(e.id);if(im&&im.complete)ctx.drawImage(im,e.x,e.y,e.w,e.h)}
  ctx.restore();
  if(selected.includes(e.id)){ctx.save();ctx.strokeStyle='#ffd166';ctx.lineWidth=1.5;ctx.setLineDash([5,3]);ctx.strokeRect(e.x-.5,e.y-.5,e.w+1,e.h+1);ctx.setLineDash([]);ctx.fillStyle='#ffd166';ctx.fillRect(e.x+e.w-4,e.y+e.h-4,8,8);ctx.restore()}
@@ -226,20 +230,20 @@ function ungroup(){snapshot();els.filter(e=>selected.includes(e.id)).forEach(e=>
 function align(mode){let a=els.filter(e=>selected.includes(e.id));if(a.length<1)return;snapshot();let l=Math.min(...a.map(e=>e.x)),r=Math.max(...a.map(e=>e.x+e.w)),t=Math.min(...a.map(e=>e.y)),b=Math.max(...a.map(e=>e.y+e.h));a.forEach(e=>{if(mode==='left')e.x=l;if(mode==='center')e.x=(l+r-e.w)/2;if(mode==='right')e.x=r-e.w;if(mode==='top')e.y=t;if(mode==='middle')e.y=(t+b-e.h)/2;if(mode==='bottom')e.y=b-e.h});syncInspector()}
 function applyFill(){
  let e=els.find(x=>x.id===selected[selected.length-1]);if(!e)return;
- snapshot();let type=$('fillType').value;
- if(type==='solid'){e.gradient=null;e.fill=$('fillColor').value}
+ snapshot();let type=$('fillType').value;e.fillMode=$('fillSource').value;e.teamShade=Number($('teamShade').value)||0;
+ if(type==='solid'){e.gradient=null;if(e.fillMode==='fixed')e.fill=$('fillColor').value}
  else{e.gradient={type,a:$('gradA').value,b:$('gradB').value,angle:Number($('gradAngle').value),mid:Number($('gradMid').value)}}
- e.stroke=$('strokeColor').value;e.strokeWidth=Number($('strokeWidth').value);e.opacity=Number($('opacity').value);e.radius=Number($('radius').value);
+ $('fillColor').disabled=e.fillMode!=='fixed';$('teamShadeLabel').textContent=$('teamShade').value;e.stroke=$('strokeColor').value;e.strokeWidth=Number($('strokeWidth').value);e.opacity=Number($('opacity').value);e.radius=Number($('radius').value);
  e.shadow=$('shadow').checked;e.shadowColor=$('shadowColor').value;e.shadowBlur=Number($('shadowBlur').value);e.shadowX=Number($('shadowX').value);e.shadowY=Number($('shadowY').value);
  syncInspector()
 }
 function bindProp(id,fn){$(id).addEventListener('change',fn)}
 $('fillType').onchange=()=>{$('solidControls').hidden=$('fillType').value!=='solid';$('gradientControls').hidden=$('fillType').value==='solid';applyFill()};
 $('gradAngle').oninput=()=>{$('angleLabel').textContent=$('gradAngle').value+'°'};
-$('opacity').oninput=()=>{$('opacityLabel').textContent=$('opacity').value+'%'};
-['fillColor','gradA','gradB','gradMid','gradAngle','strokeColor','strokeWidth','opacity','radius','shadow','shadowColor','shadowBlur','shadowX','shadowY'].forEach(id=>bindProp(id,applyFill));
+$('opacity').oninput=()=>{$('opacityLabel').textContent=$('opacity').value+'%'};$('teamShade').oninput=()=>{$('teamShadeLabel').textContent=$('teamShade').value};
+['fillColor','fillSource','teamShade','gradA','gradB','gradMid','gradAngle','strokeColor','strokeWidth','opacity','radius','shadow','shadowColor','shadowBlur','shadowX','shadowY'].forEach(id=>bindProp(id,applyFill));
 ['textContent','font','fontSize','fontWeight','textAlign','letterSpacing','lineHeight'].forEach(id=>bindProp(id,()=>{let e=els.find(x=>x.id===selected[selected.length-1]);if(!e||e.type!=='text')return;snapshot();e.text=$('textContent').value;e.font=$('font').value;e.fontSize=Number($('fontSize').value);e.weight=Number($('fontWeight').value);e.align=$('textAlign').value;e.letterSpacing=Number($('letterSpacing').value);e.lineHeight=Number($('lineHeight').value);render()}));
-function loadInspectorToControls(){let e=els.find(x=>x.id===selected[selected.length-1]);if(!e)return;$('fillType').value=e.gradient?.type||'solid';$('solidControls').hidden=!!e.gradient;$('gradientControls').hidden=!e.gradient;$('fillColor').value=e.fill||'#ffffff';$('gradA').value=e.gradient?.a||e.fill||'#ffffff';$('gradB').value=e.gradient?.b||'#111111';$('gradAngle').value=e.gradient?.angle||0;$('angleLabel').textContent=$('gradAngle').value+'°';$('gradMid').value=e.gradient?.mid||50;$('strokeColor').value=e.stroke||'#ffffff';$('strokeWidth').value=e.strokeWidth||0;$('opacity').value=e.opacity??100;$('opacityLabel').textContent=$('opacity').value+'%';$('radius').value=e.radius||0;$('shadow').checked=!!e.shadow;$('shadowColor').value=e.shadowColor||'#000000';$('shadowBlur').value=e.shadowBlur||12;$('shadowX').value=e.shadowX||0;$('shadowY').value=e.shadowY||0;
+function loadInspectorToControls(){let e=els.find(x=>x.id===selected[selected.length-1]);if(!e)return;$('fillSource').value=e.fillMode||'fixed';$('teamShade').value=e.teamShade||0;$('teamShadeLabel').textContent=$('teamShade').value;$('fillType').value=e.gradient?.type||'solid';$('solidControls').hidden=!!e.gradient;$('gradientControls').hidden=!e.gradient;$('fillColor').value=e.fill||'#ffffff';$('fillColor').disabled=(e.fillMode||'fixed')!=='fixed';$('gradA').value=e.gradient?.a||e.fill||'#ffffff';$('gradB').value=e.gradient?.b||'#111111';$('gradAngle').value=e.gradient?.angle||0;$('angleLabel').textContent=$('gradAngle').value+'°';$('gradMid').value=e.gradient?.mid||50;$('strokeColor').value=e.stroke||'#ffffff';$('strokeWidth').value=e.strokeWidth||0;$('opacity').value=e.opacity??100;$('opacityLabel').textContent=$('opacity').value+'%';$('radius').value=e.radius||0;$('shadow').checked=!!e.shadow;$('shadowColor').value=e.shadowColor||'#000000';$('shadowBlur').value=e.shadowBlur||12;$('shadowX').value=e.shadowX||0;$('shadowY').value=e.shadowY||0;
  if(e.type==='text'){$('textContent').value=e.text||'';$('font').value=e.font||'Lilita One';$('fontSize').value=e.fontSize||24;$('fontWeight').value=e.weight||700;$('textAlign').value=e.align||'center';$('letterSpacing').value=e.letterSpacing||0;$('lineHeight').value=e.lineHeight||1.1}}
 const oldSync=syncInspector;syncInspector=function(){oldSync();loadInspectorToControls();syncScoreAnimationControls()};
 function selectedScoreLayers(){return els.filter(e=>selected.includes(e.id)&&e.type==='text'&&/^\{(away_score|home_score)\}$/.test(String(e.text||'')))}
@@ -253,7 +257,117 @@ $('resetScoreAnim').onclick=()=>{let a=selectedScoreLayers();if(!a.length){toast
 function exportProject(){return {format:'RetroBowlScorebugStudio',version:3,canvas:[c.width,c.height],elements:els.map(e=>{let x={...e};delete x._groupHeaderShown;return x})}}
 function download(name,content,mime){let a=document.createElement('a'),u=URL.createObjectURL(new Blob([content],{type:mime}));a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
 $('save').onclick=()=>download('scorebug-project.json',JSON.stringify(exportProject(),null,2),'application/json');
-$('export').onclick=()=>{let spec='// Retro Bowl Scorebug Studio — editable design specification\n// Includes gradients, layers, groups, geometry, and appearance.\nconst SCOREBUG_SPEC = '+JSON.stringify(exportProject(),null,2)+';\n';download('scorebug-spec.js',spec,'text/javascript');toast('Exported JS design specification')};
+function generateGameMod(){
+ const project=exportProject(),elements=project.elements.filter(e=>e.visible!==false);
+ const payload=JSON.stringify({canvas:project.canvas,elements});
+ return `// @name Custom Retro Bowl Scorebug
+// @description Custom scorebug exported from Retro Bowl Scorebug Studio.
+// @category presentation
+// Install as engine/mods/custom_scorebug.js
+(function(){
+"use strict";
+var LAYOUT=${payload};
+var installed=false,attempts=0,retry=null,lastScores=[null,null],scoreRoll=[null,null];
+var warned={};
+function logOnce(k,msg){if(!warned[k]){warned[k]=true;console.warn("[Scorebug Studio] "+msg)}}
+function team(inst,i){return inst.gmlteam&&inst.gmlteam[i]}
+function mapVal(t,k,d){try{var v=ds_map_find_value(t,k);return v==null?d:v}catch(e){return d}}
+function color(hex,inst,other){
+ try{var h=String(hex||"#FFFFFF").replace(/^[$#]/,"");if(!/^[0-9a-fA-F]{6}$/.test(h))h="FFFFFF";return gml_Script_s_rgb_to_bgr(inst,other,gml_Script_s_hex_string_to_col(inst,other,h))}
+ catch(e){return make_color_rgb(255,255,255)}
+}
+function shade(c,a){var r=c&255,g=(c>>8)&255,b=(c>>16)&255;if(a>=0){r=Math.round(r+(255-r)*a);g=Math.round(g+(255-g)*a);b=Math.round(b+(255-b)*a)}else{r=Math.round(r*(1+a));g=Math.round(g*(1+a));b=Math.round(b*(1+a))}return r|(g<<8)|(b<<16)}
+function teamColor(inst,other,mode,amount){var t=team(inst,mode==="home"?1:0),hex=mapVal(t,"colshirt","777777");var c=color(hex,inst,other);var a=Math.max(-.8,Math.min(.8,(Number(amount)||0)/100));return shade(c,a)}
+function gameData(inst,other){
+ var a=team(inst,0),h=team(inst,1),d={away_score:String(inst.gmlteam_score?inst.gmlteam_score[0]:0),home_score:String(inst.gmlteam_score?inst.gmlteam_score[1]:0),
+ away_name:String(mapVal(a,"name","AWAY")),home_name:String(mapVal(h,"name","HOME")),
+ away_abbr:String(mapVal(a,"tla","AWY")),home_abbr:String(mapVal(h,"tla","HME")),
+ away_record:String(mapVal(a,"wins","0"))+"-"+String(mapVal(a,"losses","0")),
+ home_record:String(mapVal(h,"wins","0"))+"-"+String(mapVal(h,"losses","0")),
+ away_rank:"",home_rank:"",clock:"",quarter:"",down_distance:"",timeouts:"",away_timeouts:"",home_timeouts:"",possession:""};
+ try{var sub=gml_Script_s_get_subdivision(inst,other,a),uid=mapVal(a,"uid",null),n=Number(gml_Script_s_subdivision_get_team_ranking(inst,other,sub,uid));if(uid!=null&&sub!=null&&n>=0&&n<25)d.away_rank="#"+(n+1)}catch(e){}
+ try{var sub2=gml_Script_s_get_subdivision(inst,other,h),uid2=mapVal(h,"uid",null),n2=Number(gml_Script_s_subdivision_get_team_ranking(inst,other,sub2,uid2));if(uid2!=null&&sub2!=null&&n2>=0&&n2<25)d.home_rank="#"+(n2+1)}catch(e){}
+ try{d.clock=String(gml_Script_s_get_string_time(inst,other,inst.gmlminutes,inst.gmlseconds))}catch(e){}
+ try{d.quarter=String(gml_Script_s_str(inst,other,"quarter_"+String(inst.gmlquarter)))}catch(e){}
+ try{d.down_distance=String(gml_Script_s_get_string_downand(inst,other))}catch(e){}
+ try{d.timeouts=String(gml_Script_s_count_timeouts(inst,other))}catch(e){}
+ try{d.away_timeouts=String(gml_Script_s_count_timeouts(inst,other))}catch(e){}
+ return d;
+}
+function scoreValue(side,target,cfg){
+ var idx=side==="away"?0:1,now=Number(target)||0,prev=lastScores[idx];
+ if(prev===null){lastScores[idx]=now;return now}
+ if(now!==prev){scoreRoll[idx]={from:prev,to:now,start:Date.now()};lastScores[idx]=now}
+ var r=scoreRoll[idx];if(!r)return now;
+ cfg=cfg||{enabled:true,duration:900,style:"count",ease:"out"};
+ if(cfg.enabled===false){scoreRoll[idx]=null;return now}
+ var duration=Math.max(200,Number(cfg.duration)||900),t=Math.min(1,(Date.now()-r.start)/duration),p=t;
+ if(cfg.style==="snap")p=t<.72?Math.min(1,t/.72):1;
+ else if(cfg.ease==="bounce")p=Math.min(1,t+Math.sin(t*Math.PI)*.08);
+ else if(cfg.ease!=="linear")p=1-Math.pow(1-t,3);
+ var v=Math.round(r.from+(r.to-r.from)*p);
+ if(t>=1)scoreRoll[idx]=null;
+ return v;
+}
+function expand(text,d,inst,e){
+ var cfg=e&&e.animation||{enabled:true,duration:900,style:"count",ease:"out"};
+ return String(text==null?"":text).replace(/\{([a-z_]+)\}/gi,function(m,k){
+  if(k==="away_score")return String(scoreValue("away",d[k],cfg));
+  if(k==="home_score")return String(scoreValue("home",d[k],cfg));
+  return d[k]===undefined?m:String(d[k]);
+ });
+}
+function drawElement(e,d,inst,other,sx,sy,scale){
+ var x=sx+Number(e.x||0)*scale,y=sy+Number(e.y||0)*scale,w=Number(e.w||0)*scale,h=Number(e.h||0)*scale;
+ var alpha=Math.max(0,Math.min(1,(e.opacity==null?100:Number(e.opacity))/100));
+ if(alpha<=0)return;
+ var col=e.fillMode==="away"||e.fillMode==="home"?teamColor(inst,other,e.fillMode,e.teamShade):color(e.fill||"#FFFFFF",inst,other);
+ draw_set_alpha(alpha);draw_set_color(col);
+ if(e.type==="text"){
+  var txt=expand(e.text,d,inst,e),align=e.align==="center"?1:e.align==="right"?2:0;
+  draw_set_font(global.gmlfnt_small_flex);draw_set_halign(align);draw_set_valign(1);
+  var fs=Math.max(.1,Number(e.fontSize||20)/20)*scale*(global.gmlhd_fonts?0.25:1);
+  var tx=e.align==="center"?x+w/2:e.align==="right"?x+w:x;
+  draw_text_transformed(tx,y+h/2,txt,fs,fs,0);
+ }else if(e.type==="line"){
+  draw_set_color(color(e.stroke||e.fill||"#FFFFFF",inst,other));draw_line_width(x,y,x+w,y+h,Math.max(1,Number(e.strokeWidth||2)*scale));
+ }else if(e.type==="pen"&&Array.isArray(e.points)){
+  draw_set_color(color(e.stroke||e.fill||"#FFFFFF",inst,other));
+  for(var i=1;i<e.points.length;i++){var p=e.points[i-1],q=e.points[i];draw_line_width(sx+p[0]*scale,sy+p[1]*scale,sx+q[0]*scale,sy+q[1]*scale,Math.max(1,Number(e.strokeWidth||3)*scale))}
+ }else if(e.type==="ellipse"){
+  draw_ellipse_colour(x,y,x+w,y+h,col,col,0);
+  if(Number(e.strokeWidth)>0){draw_set_color(color(e.stroke,inst,other));draw_ellipse(x,y,x+w,y+h,1)}
+ }else if(e.type==="rect"||e.type==="roundrect"){
+  draw_rectangle_colour(x,y,x+w,y+h,col,col,col,col,0);
+  if(Number(e.strokeWidth)>0){draw_set_color(color(e.stroke,inst,other));draw_rectangle(x,y,x+w,y+h,1)}
+ }else if(e.type==="image"){
+  logOnce("image","Image layers are not embedded in game mods yet; image layer(s) are skipped.");
+ }
+}
+function install(){
+ var original=window.gml_Script_s_draw_scoreboard;
+ if(typeof original!=="function"){if(++attempts>=200){clearInterval(retry);console.error("[Scorebug Studio] Could not locate s_draw_scoreboard.")}return}
+ clearInterval(retry);
+ window.gml_Script_s_draw_scoreboard=function(inst,other){
+  try{
+   if(global.gmldebug_aa_hide_ui)return;
+   var gw=display_get_gui_width(),gh=display_get_gui_height(),cw=LAYOUT.canvas[0],ch=LAYOUT.canvas[1];
+   if(!(gw>0&&gh>0&&cw>0&&ch>0))return;
+   var scale=Math.min(gw/cw,(gh-8)/ch),sx=(gw-cw*scale)/2,sy=gh-ch*scale-4;
+   var d=gameData(inst,other);
+   draw_set_alpha(1);draw_set_halign(0);draw_set_valign(1);
+   for(var i=0;i<LAYOUT.elements.length;i++)drawElement(LAYOUT.elements[i],d,inst,other,sx,sy,scale);
+  }catch(err){logOnce("draw","Scorebug drawing failed: "+(err&&err.stack||err))}
+  finally{draw_set_alpha(1);draw_set_color(16777215);draw_set_halign(0);draw_set_valign(1)}
+ };
+ installed=true;
+ console.log("[Scorebug Studio] Custom scorebug installed.");
+}
+retry=setInterval(install,50);install();
+})();`;
+}
+$('exportSpec').onclick=()=>{let spec='// Retro Bowl Scorebug Studio — editable design specification\\nconst SCOREBUG_SPEC = '+JSON.stringify(exportProject(),null,2)+';\\n';download('scorebug-spec.js',spec,'text/javascript');toast('Exported editable specification')};
+$('export').onclick=()=>{download('custom_scorebug.js',generateGameMod(),'text/javascript');toast('Exported installable game mod')};
 $('open').onclick=()=>{let inp=document.createElement('input');inp.type='file';inp.accept='.json,application/json';inp.onchange=()=>{let f=inp.files[0];if(!f)return;let rd=new FileReader();rd.onload=()=>{try{let obj=JSON.parse(rd.result);els=(obj.elements||obj.layers||[]).map((e,i)=>normalize(e,i));let cv=obj.canvas;if(Array.isArray(cv)){c.width=cv[0]||732;c.height=cv[1]||338}else if(cv){c.width=cv.width||732;c.height=cv.height||338}$('cw').value=c.width;$('ch').value=c.height;selected=[];history=[];future=[];render();syncInspector();toast('Project imported')}catch(err){alert('Could not open project: '+err.message)}};rd.readAsText(f)};inp.click()};
 function normalize(e,i){let n=clone(e);n.id=n.id||uid();n.name=n.name||'Layer '+(i+1);if(n.type==='image'&&n.src){let im=new Image();im.onload=()=>render();im.src=n.src;imageCache.set(n.id,im)}n.x=Number(n.x)||0;n.y=Number(n.y)||0;n.w=Number(n.w)||0;n.h=Number(n.h)||0;n.opacity=n.opacity??(n.alpha!==undefined?n.alpha*100:100);n.stroke=n.stroke||n.outline||'#ffffff';n.strokeWidth=n.strokeWidth??n.width??0;n.fill=n.fill||n.color||'#ffffff';n.type=n.type==='roundrect'?'roundrect':n.type||'rect';if(n.font_scale!==undefined)n.fontSize=10*n.font_scale;if(n.color_mode==='Away team')n.fillMode='away';if(n.color_mode==='Home team')n.fillMode='home';if(n.fill_mode==='Away team')n.fillMode='away';if(n.fill_mode==='Home team')n.fillMode='home';if(n.type==='text'){n.weight=n.weight||700;n.font=n.font||'Lilita One';n.fontSize=n.fontSize||24}return n}
 $('imageFile').onchange=ev=>{let f=ev.target.files[0];if(!f)return;let rd=new FileReader();rd.onload=()=>{let id=uid(),im=new Image();im.onload=()=>{imageCache.set(id,im);snapshot();els.push({id,name:f.name,type:'image',src:rd.result,x:100,y:80,w:Math.min(180,im.width),h:Math.min(120,im.height),opacity:100,visible:true,locked:false});selected=[id];syncInspector()};im.src=rd.result};rd.readAsDataURL(f);ev.target.value=''};
