@@ -68,6 +68,8 @@ details summary{cursor:pointer;color:#cbd5e1;font-size:11px;font-weight:700;padd
 <aside class="right">
 <div><h3>Properties</h3><div id="inspector" class="panel"><p class="muted">Select a layer to edit its properties.</p></div>
 <div class="panel"><h3>Fill & effects</h3><div class="field"><label>Fill type</label><select id="fillType"><option value="solid">Solid</option><option value="linear">Linear gradient</option><option value="radial">Radial gradient</option></select></div>
+<div class="field"><label>Fill source</label><select id="fillSource"><option value="fixed">Custom color</option><option value="away">Away team color</option><option value="home">Home team color</option></select></div>
+<div class="field"><label>Team color shade <b id="teamShadeLabel">0</b></label><input id="teamShade" type="range" min="-80" max="80" value="0"><p class="muted">Negative darkens; positive lightens. Team colors update when the matchup changes.</p></div>
 <div id="solidControls" class="field"><label>Fill color</label><input id="fillColor" type="color" value="#253e63"></div>
 <div id="gradientControls" hidden><div class="row"><div class="field"><label>Start</label><input id="gradA" type="color" value="#164a83"></div><div class="field"><label>End</label><input id="gradB" type="color" value="#071322"></div></div>
 <div class="field"><label>Angle <b id="angleLabel">0°</b></label><input id="gradAngle" type="range" min="0" max="360" value="0"></div>
@@ -117,11 +119,13 @@ function updateHistory(){$('undo').disabled=!history.length;$('redo').disabled=!
 function undo(){if(!history.length)return;future.push(JSON.stringify({els,selected,groupCounter}));let s=JSON.parse(history.pop());els=s.els;selected=s.selected;groupCounter=s.groupCounter;render()}
 function redo(){if(!future.length)return;history.push(JSON.stringify({els,selected,groupCounter}));let s=JSON.parse(future.pop());els=s.els;selected=s.selected;groupCounter=s.groupCounter;render()}
 function val(el,k,d){return el&&el[k]!==undefined?el[k]:d}
-function colorFor(e){let mode=e.fillMode||'fixed';if(mode==='away')return data.away_color;if(mode==='home')return data.home_color;return e.fill||'#ffffff'}
+function shadeColor(hex,amount){let h=String(hex||'#ffffff').replace('#','');if(h.length===3)h=h.split('').map(x=>x+x).join('');let n=parseInt(h,16);if(!Number.isFinite(n))return hex;let t=amount<0?0:255,p=Math.min(1,Math.abs(amount)/100);let r=(n>>16)&255,g=(n>>8)&255,b=n&255;return '#'+[r,g,b].map(v=>Math.round(v+(t-v)*p).toString(16).padStart(2,'0')).join('')}
+function teamBase(e){return e.fillMode==='away'?data.away_color:e.fillMode==='home'?data.home_color:null}
+function colorFor(e){let base=teamBase(e);return base?shadeColor(base,Number(e.teamShade)||0):(e.fill||'#ffffff')}
 function expanded(s){return String(s||'').replace(/\{([a-z_]+)\}/gi,(m,k)=>data[k]===undefined?m:data[k])}
 function gradient(e,x,y,w,h){
  const g=e.gradient;if(!g)return colorFor(e);
- let a=g.a||e.fill||'#fff',b=g.b||'#111';
+ let base=teamBase(e),shade=Number(e.teamShade)||0,a=base?shadeColor(base,shade+28):(g.a||e.fill||'#fff'),b=base?shadeColor(base,shade-38):(g.b||'#111');
  let grad;
  if(g.type==='radial'){grad=ctx.createRadialGradient(x+w/2,y+h/2,0,x+w/2,y+h/2,Math.max(w,h)*.7)}
  else{let rad=(Number(g.angle)||0)*Math.PI/180,dx=Math.cos(rad)*w/2,dy=Math.sin(rad)*h/2;grad=ctx.createLinearGradient(x+w/2-dx,y+h/2-dy,x+w/2+dx,y+h/2+dy)}
@@ -226,20 +230,20 @@ function ungroup(){snapshot();els.filter(e=>selected.includes(e.id)).forEach(e=>
 function align(mode){let a=els.filter(e=>selected.includes(e.id));if(a.length<1)return;snapshot();let l=Math.min(...a.map(e=>e.x)),r=Math.max(...a.map(e=>e.x+e.w)),t=Math.min(...a.map(e=>e.y)),b=Math.max(...a.map(e=>e.y+e.h));a.forEach(e=>{if(mode==='left')e.x=l;if(mode==='center')e.x=(l+r-e.w)/2;if(mode==='right')e.x=r-e.w;if(mode==='top')e.y=t;if(mode==='middle')e.y=(t+b-e.h)/2;if(mode==='bottom')e.y=b-e.h});syncInspector()}
 function applyFill(){
  let e=els.find(x=>x.id===selected[selected.length-1]);if(!e)return;
- snapshot();let type=$('fillType').value;
- if(type==='solid'){e.gradient=null;e.fill=$('fillColor').value}
+ snapshot();let type=$('fillType').value;e.fillMode=$('fillSource').value;e.teamShade=Number($('teamShade').value)||0;
+ if(type==='solid'){e.gradient=null;if(e.fillMode==='fixed')e.fill=$('fillColor').value}
  else{e.gradient={type,a:$('gradA').value,b:$('gradB').value,angle:Number($('gradAngle').value),mid:Number($('gradMid').value)}}
- e.stroke=$('strokeColor').value;e.strokeWidth=Number($('strokeWidth').value);e.opacity=Number($('opacity').value);e.radius=Number($('radius').value);
+ $('fillColor').disabled=e.fillMode!=='fixed';$('teamShadeLabel').textContent=$('teamShade').value;e.stroke=$('strokeColor').value;e.strokeWidth=Number($('strokeWidth').value);e.opacity=Number($('opacity').value);e.radius=Number($('radius').value);
  e.shadow=$('shadow').checked;e.shadowColor=$('shadowColor').value;e.shadowBlur=Number($('shadowBlur').value);e.shadowX=Number($('shadowX').value);e.shadowY=Number($('shadowY').value);
  syncInspector()
 }
 function bindProp(id,fn){$(id).addEventListener('change',fn)}
 $('fillType').onchange=()=>{$('solidControls').hidden=$('fillType').value!=='solid';$('gradientControls').hidden=$('fillType').value==='solid';applyFill()};
 $('gradAngle').oninput=()=>{$('angleLabel').textContent=$('gradAngle').value+'°'};
-$('opacity').oninput=()=>{$('opacityLabel').textContent=$('opacity').value+'%'};
-['fillColor','gradA','gradB','gradMid','gradAngle','strokeColor','strokeWidth','opacity','radius','shadow','shadowColor','shadowBlur','shadowX','shadowY'].forEach(id=>bindProp(id,applyFill));
+$('opacity').oninput=()=>{$('opacityLabel').textContent=$('opacity').value+'%'};$('teamShade').oninput=()=>{$('teamShadeLabel').textContent=$('teamShade').value};
+['fillColor','fillSource','teamShade','gradA','gradB','gradMid','gradAngle','strokeColor','strokeWidth','opacity','radius','shadow','shadowColor','shadowBlur','shadowX','shadowY'].forEach(id=>bindProp(id,applyFill));
 ['textContent','font','fontSize','fontWeight','textAlign','letterSpacing','lineHeight'].forEach(id=>bindProp(id,()=>{let e=els.find(x=>x.id===selected[selected.length-1]);if(!e||e.type!=='text')return;snapshot();e.text=$('textContent').value;e.font=$('font').value;e.fontSize=Number($('fontSize').value);e.weight=Number($('fontWeight').value);e.align=$('textAlign').value;e.letterSpacing=Number($('letterSpacing').value);e.lineHeight=Number($('lineHeight').value);render()}));
-function loadInspectorToControls(){let e=els.find(x=>x.id===selected[selected.length-1]);if(!e)return;$('fillType').value=e.gradient?.type||'solid';$('solidControls').hidden=!!e.gradient;$('gradientControls').hidden=!e.gradient;$('fillColor').value=e.fill||'#ffffff';$('gradA').value=e.gradient?.a||e.fill||'#ffffff';$('gradB').value=e.gradient?.b||'#111111';$('gradAngle').value=e.gradient?.angle||0;$('angleLabel').textContent=$('gradAngle').value+'°';$('gradMid').value=e.gradient?.mid||50;$('strokeColor').value=e.stroke||'#ffffff';$('strokeWidth').value=e.strokeWidth||0;$('opacity').value=e.opacity??100;$('opacityLabel').textContent=$('opacity').value+'%';$('radius').value=e.radius||0;$('shadow').checked=!!e.shadow;$('shadowColor').value=e.shadowColor||'#000000';$('shadowBlur').value=e.shadowBlur||12;$('shadowX').value=e.shadowX||0;$('shadowY').value=e.shadowY||0;
+function loadInspectorToControls(){let e=els.find(x=>x.id===selected[selected.length-1]);if(!e)return;$('fillSource').value=e.fillMode||'fixed';$('teamShade').value=e.teamShade||0;$('teamShadeLabel').textContent=$('teamShade').value;$('fillType').value=e.gradient?.type||'solid';$('solidControls').hidden=!!e.gradient;$('gradientControls').hidden=!e.gradient;$('fillColor').value=e.fill||'#ffffff';$('fillColor').disabled=(e.fillMode||'fixed')!=='fixed';$('gradA').value=e.gradient?.a||e.fill||'#ffffff';$('gradB').value=e.gradient?.b||'#111111';$('gradAngle').value=e.gradient?.angle||0;$('angleLabel').textContent=$('gradAngle').value+'°';$('gradMid').value=e.gradient?.mid||50;$('strokeColor').value=e.stroke||'#ffffff';$('strokeWidth').value=e.strokeWidth||0;$('opacity').value=e.opacity??100;$('opacityLabel').textContent=$('opacity').value+'%';$('radius').value=e.radius||0;$('shadow').checked=!!e.shadow;$('shadowColor').value=e.shadowColor||'#000000';$('shadowBlur').value=e.shadowBlur||12;$('shadowX').value=e.shadowX||0;$('shadowY').value=e.shadowY||0;
  if(e.type==='text'){$('textContent').value=e.text||'';$('font').value=e.font||'Lilita One';$('fontSize').value=e.fontSize||24;$('fontWeight').value=e.weight||700;$('textAlign').value=e.align||'center';$('letterSpacing').value=e.letterSpacing||0;$('lineHeight').value=e.lineHeight||1.1}}
 const oldSync=syncInspector;syncInspector=function(){oldSync();loadInspectorToControls();syncScoreAnimationControls()};
 function selectedScoreLayers(){return els.filter(e=>selected.includes(e.id)&&e.type==='text'&&/^\{(away_score|home_score)\}$/.test(String(e.text||'')))}
