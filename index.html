@@ -294,16 +294,29 @@ function gameData(inst,other){
  try{d.away_timeouts=String(gml_Script_s_count_timeouts(inst,other))}catch(e){}
  return d;
 }
-function scoreValue(side,target){
+function scoreValue(side,target,cfg){
  var idx=side==="away"?0:1,now=Number(target)||0,prev=lastScores[idx];
  if(prev===null){lastScores[idx]=now;return now}
  if(now!==prev){scoreRoll[idx]={from:prev,to:now,start:Date.now()};lastScores[idx]=now}
  var r=scoreRoll[idx];if(!r)return now;
- var duration=900,t=Math.min(1,(Date.now()-r.start)/duration),p=1-Math.pow(1-t,3),v=Math.round(r.from+(r.to-r.from)*p);
+ cfg=cfg||{enabled:true,duration:900,style:"count",ease:"out"};
+ if(cfg.enabled===false){scoreRoll[idx]=null;return now}
+ var duration=Math.max(200,Number(cfg.duration)||900),t=Math.min(1,(Date.now()-r.start)/duration),p=t;
+ if(cfg.style==="snap")p=t<.72?Math.min(1,t/.72):1;
+ else if(cfg.ease==="bounce")p=Math.min(1,t+Math.sin(t*Math.PI)*.08);
+ else if(cfg.ease!=="linear")p=1-Math.pow(1-t,3);
+ var v=Math.round(r.from+(r.to-r.from)*p);
  if(t>=1)scoreRoll[idx]=null;
  return v;
 }
-function expand(text,d,inst){return String(text==null?"":text).replace(/\{([a-z_]+)\}/gi,function(m,k){if(k==="away_score")return String(scoreValue("away",d[k]));if(k==="home_score")return String(scoreValue("home",d[k]));return d[k]===undefined?m:String(d[k])})}
+function expand(text,d,inst,e){
+ var cfg=e&&e.animation||{enabled:true,duration:900,style:"count",ease:"out"};
+ return String(text==null?"":text).replace(/\{([a-z_]+)\}/gi,function(m,k){
+  if(k==="away_score")return String(scoreValue("away",d[k],cfg));
+  if(k==="home_score")return String(scoreValue("home",d[k],cfg));
+  return d[k]===undefined?m:String(d[k]);
+ });
+}
 function drawElement(e,d,inst,other,sx,sy,scale){
  var x=sx+Number(e.x||0)*scale,y=sy+Number(e.y||0)*scale,w=Number(e.w||0)*scale,h=Number(e.h||0)*scale;
  var alpha=Math.max(0,Math.min(1,(e.opacity==null?100:Number(e.opacity))/100));
@@ -311,7 +324,7 @@ function drawElement(e,d,inst,other,sx,sy,scale){
  var col=e.fillMode==="away"||e.fillMode==="home"?teamColor(inst,other,e.fillMode,e.teamShade):color(e.fill||"#FFFFFF",inst,other);
  draw_set_alpha(alpha);draw_set_color(col);
  if(e.type==="text"){
-  var txt=expand(e.text,d,inst),align=e.align==="center"?1:e.align==="right"?2:0;
+  var txt=expand(e.text,d,inst,e),align=e.align==="center"?1:e.align==="right"?2:0;
   draw_set_font(global.gmlfnt_small_flex);draw_set_halign(align);draw_set_valign(1);
   var fs=Math.max(.1,Number(e.fontSize||20)/20)*scale;
   var tx=e.align==="center"?x+w/2:e.align==="right"?x+w:x;
