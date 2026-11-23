@@ -132,7 +132,7 @@ function drawText(e){
  const fs=Number(e.fontSize)||20,weight=e.weight||700,font=e.font||'Arial';
  ctx.font=weight+' '+fs+'px "'+font+'"';ctx.textBaseline='middle';ctx.textAlign=e.align||'left';
  let tx=e.align==='center'?e.x+e.w/2:e.align==='right'?e.x+e.w:e.x;
- let txt=expanded(e.text||'');if(e.animation?.enabled){let m=String(e.text||'').match(/^\{(away_score|home_score)\}$/);if(m&&scorePreviewValues[m[1]]!==undefined)txt=String(scorePreviewValues[m[1]])}let lines=txt.split('\\n'),lh=fs*(Number(e.lineHeight)||1.1);
+ let txt=expanded(e.text||'');let m=String(e.text||'').match(/^\{(away_score|home_score)\}$/);if(m&&scorePreviewValues[m[1]]!==undefined&&e.animation?.enabled!==false)txt=String(scorePreviewValues[m[1]]);let lines=txt.split('\n'),lh=fs*(Number(e.lineHeight)||1.1);
  lines.forEach((line,i)=>{let y=e.y+e.h/2+(i-(lines.length-1)/2)*lh;let spacing=Number(e.letterSpacing)||0;
  if(!spacing)ctx.fillText(line,tx,y,e.w);
  else{let width=[...line].reduce((a,ch)=>a+ctx.measureText(ch).width+spacing,0)-spacing;let xx=e.align==='center'?tx-width/2:e.align==='right'?tx-width:tx;for(const ch of line){ctx.fillText(ch,xx,y);xx+=ctx.measureText(ch).width+spacing}}});
