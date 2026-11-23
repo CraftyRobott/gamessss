@@ -104,12 +104,12 @@ const starter=[
 {id:'away',name:'Away panel',type:'roundrect',x:95,y:222,w:210,h:76,fill:'#344E72',fillMode:'away',stroke:'#ffffff',strokeWidth:0,radius:8,opacity:100,visible:true,locked:false,gradient:{type:'linear',a:'#5478a4',b:'#1e3555',angle:90,mid:50}},
 {id:'home',name:'Home panel',type:'roundrect',x:427,y:222,w:210,h:76,fill:'#7B3030',fillMode:'home',stroke:'#ffffff',strokeWidth:0,radius:8,opacity:100,visible:true,locked:false,gradient:{type:'linear',a:'#b64a54',b:'#551c2b',angle:90,mid:50}},
 {id:'awayname',name:'Away team name',type:'text',x:112,y:201,w:180,h:24,text:'{away_rank} {away_name}',fill:'#ffffff',font:'retro-bowl',fontSize:16,weight:800,align:'left',letterSpacing:0,opacity:100,visible:true,locked:false},
-{id:'homename',name:'Home team name',type:'text',x:620,y:201,w:180,h:24,text:'{home_rank} {home_name}',fill:'#ffffff',font:'Lilita One',fontSize:16,weight:800,align:'right',letterSpacing:0,opacity:100,visible:true,locked:false},
+{id:'homename',name:'Home team name',type:'text',x:620,y:201,w:180,h:24,text:'{home_rank} {home_name}',fill:'#ffffff',font:'retro-bowl',fontSize:16,weight:800,align:'right',letterSpacing:0,opacity:100,visible:true,locked:false},
 {id:'awayscore',name:'Away score',type:'text',x:274,y:260,w:40,h:30,text:'{away_score}',fill:'#ffffff',font:'retro-bowl',fontSize:40,weight:900,align:'center',opacity:100,visible:true,locked:false},
-{id:'homescore',name:'Home score',type:'text',x:458,y:260,w:40,h:30,text:'{home_score}',fill:'#ffffff',font:'Lilita One',fontSize:40,weight:900,align:'center',opacity:100,visible:true,locked:false},
+{id:'homescore',name:'Home score',type:'text',x:458,y:260,w:40,h:30,text:'{home_score}',fill:'#ffffff',font:'retro-bowl',fontSize:40,weight:900,align:'center',opacity:100,visible:true,locked:false},
 {id:'clock',name:'Clock',type:'text',x:366,y:248,w:80,h:22,text:'{clock}',fill:'#ffffff',font:'retro-bowl',fontSize:20,weight:800,align:'center',opacity:100,visible:true,locked:false},
 {id:'quarter',name:'Quarter',type:'text',x:366,y:276,w:80,h:20,text:'{quarter}',fill:'#d8d8d8',font:'retro-bowl',fontSize:13,weight:700,align:'center',opacity:100,visible:true,locked:false},
-{id:'down',name:'Down & distance',type:'text',x:366,y:218,w:130,h:20,text:'{down_distance}',fill:'#d8d8d8',font:'Lilita One',fontSize:13,weight:700,align:'center',opacity:100,visible:true,locked:false}
+{id:'down',name:'Down & distance',type:'text',x:366,y:218,w:130,h:20,text:'{down_distance}',fill:'#d8d8d8',font:'retro-bowl',fontSize:13,weight:700,align:'center',opacity:100,visible:true,locked:false}
 ];
 function clone(v){return JSON.parse(JSON.stringify(v))}
 function uid(){return 'layer_'+Math.random().toString(36).slice(2,10)}
@@ -194,7 +194,7 @@ function mutate(e,k,v){snapshot();e[k]=v;syncInspector()}
 function add(type,x=120,y=90){
  snapshot();let e={id:uid(),name:type[0].toUpperCase()+type.slice(1)+' '+(els.length+1),type,x,y,w:type==='text'?170:120,h:type==='text'?34:60,fill:type==='text'?'#ffffff':'#284a70',stroke:'#ffffff',strokeWidth:type==='line'?2:0,opacity:100,visible:true,locked:false};
  if(type==='roundrect'){e.radius=10;e.gradient={type:'linear',a:'#416c9c',b:'#14283f',angle:90,mid:50}}
- if(type==='text')Object.assign(e,{text:'EDIT TEXT',font:'Lilita One',fontSize:24,weight:800,align:'center'});
+ if(type==='text')Object.assign(e,{text:'EDIT TEXT',font:'retro-bowl',fontSize:24,weight:800,align:'center'});
  if(type==='pen')Object.assign(e,{points:[[x,y],[x+1,y+1]]});
  if(type==='image')Object.assign(e,{src:'',fit:'stretch'});
  els.push(e);selected=[e.id];tool='select';setTool('select');syncInspector()
