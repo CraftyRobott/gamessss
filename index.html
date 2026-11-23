@@ -80,9 +80,9 @@ details summary{cursor:pointer;color:#cbd5e1;font-size:11px;font-weight:700;padd
 <div class="field"><label>Shadow</label><div class="row"><label class="muted"><input id="shadow" type="checkbox"> Enable</label><input id="shadowColor" type="color" value="#000000"></div><div class="row"><input id="shadowBlur" type="number" min="0" max="80" value="12" title="Blur"><input id="shadowX" type="number" value="0" title="X offset"><input id="shadowY" type="number" value="4" title="Y offset"></div></div>
 </div></div>
 <div><h3>Text / dynamic data</h3><div class="panel"><div class="field"><label>Text content</label><textarea id="textContent" rows="2" placeholder="Select a text layer"></textarea></div>
-<div class="row"><div class="field"><label>Font</label><select id="font"><option>Lilita One</option><option>Arial</option><option>Arial Narrow</option><option>Impact</option><option>Georgia</option><option>Verdana</option><option>Trebuchet MS</option><option>Courier New</option></select></div><div class="field"><label>Size</label><input id="fontSize" type="number" min="5" max="180" value="24"></div></div>
+<div class="row"><div class="field"><label>Font preview</label><select id="font"><option value="retro-bowl" selected>Retro Bowl (in-game)</option><option value="Lilita One">Lilita One (preview)</option><option>Arial</option><option>Arial Narrow</option><option>Impact</option><option>Georgia</option><option>Verdana</option><option>Trebuchet MS</option><option>Courier New</option></select></div><div class="field"><label>Size</label><input id="fontSize" type="number" min="5" max="180" value="24"></div></div>
 <div class="row"><div class="field"><label>Weight</label><select id="fontWeight"><option value="400">Regular</option><option value="600">Semibold</option><option value="700">Bold</option><option value="800">Extra bold</option><option value="900">Black</option></select></div><div class="field"><label>Align</label><select id="textAlign"><option>left</option><option selected>center</option><option>right</option></select></div></div>
-<div class="row"><div class="field"><label>Letter spacing</label><input id="letterSpacing" type="number" value="0"></div><div class="field"><label>Line height</label><input id="lineHeight" type="number" value="1.1" step=".1"></div></div>
+<p class="muted">Export uses Retro Bowl's actual small HUD font. The browser preview uses Lilita One as a visual stand-in; other font choices only affect the editor preview.</p><div class="row"><div class="field"><label>Letter spacing</label><input id="letterSpacing" type="number" value="0"></div><div class="field"><label>Line height</label><input id="lineHeight" type="number" value="1.1" step=".1"></div></div>
 <div class="field"><label>Preview token data</label><select id="samplePreset"><option value="default">SEC matchup sample</option><option value="close">Close game</option><option value="blowout">Blowout</option></select></div>
 <div class="token-grid" id="tokens"></div></div>
 <div class="panel"><h3>Score animations</h3><div class="field"><label><input id="scoreAnimEnabled" type="checkbox" checked> Enable score count-up</label></div><div class="field"><label>Roll duration <b id="scoreAnimDurationLabel">900 ms</b></label><input id="scoreAnimDuration" type="range" min="200" max="2400" step="50" value="900"></div><div class="field"><label>Number roll style</label><select id="scoreAnimStyle"><option value="count">Smooth count-up</option><option value="odometer">Odometer-style roll</option><option value="snap">Fast count + settle</option></select></div><div class="field"><label>Ease</label><select id="scoreAnimEase"><option value="out">Ease out</option><option value="linear">Linear</option><option value="bounce">Soft overshoot</option></select></div><div class="row"><button id="previewScoreAnim" class="primary">Preview score increase</button><button id="resetScoreAnim">Reset</button></div><p class="muted">Applies to selected Away/Home score text layers. Export stores these settings for game-mod translation.</p></div><div class="panel"><h3>Quick layout</h3><div class="row"><button id="alignLeft">Align left</button><button id="alignCenter">Center X</button><button id="alignRight">Align right</button></div><div class="row" style="margin-top:5px"><button id="alignTop">Top</button><button id="alignMiddle">Center Y</button><button id="alignBottom">Bottom</button></div></div>
@@ -103,13 +103,13 @@ const starter=[
 {id:'base',name:'Main background',type:'roundrect',x:95,y:222,w:542,h:76,fill:'#101B2D',stroke:'#263b58',strokeWidth:1,radius:10,opacity:96,visible:true,locked:false,gradient:null,shadow:true,shadowColor:'#000000',shadowBlur:12,shadowX:0,shadowY:4},
 {id:'away',name:'Away panel',type:'roundrect',x:95,y:222,w:210,h:76,fill:'#344E72',fillMode:'away',stroke:'#ffffff',strokeWidth:0,radius:8,opacity:100,visible:true,locked:false,gradient:{type:'linear',a:'#5478a4',b:'#1e3555',angle:90,mid:50}},
 {id:'home',name:'Home panel',type:'roundrect',x:427,y:222,w:210,h:76,fill:'#7B3030',fillMode:'home',stroke:'#ffffff',strokeWidth:0,radius:8,opacity:100,visible:true,locked:false,gradient:{type:'linear',a:'#b64a54',b:'#551c2b',angle:90,mid:50}},
-{id:'awayname',name:'Away team name',type:'text',x:112,y:201,w:180,h:24,text:'{away_rank} {away_name}',fill:'#ffffff',font:'Lilita One',fontSize:16,weight:800,align:'left',letterSpacing:0,opacity:100,visible:true,locked:false},
-{id:'homename',name:'Home team name',type:'text',x:620,y:201,w:180,h:24,text:'{home_rank} {home_name}',fill:'#ffffff',font:'Lilita One',fontSize:16,weight:800,align:'right',letterSpacing:0,opacity:100,visible:true,locked:false},
-{id:'awayscore',name:'Away score',type:'text',x:274,y:260,w:40,h:30,text:'{away_score}',fill:'#ffffff',font:'Lilita One',fontSize:40,weight:900,align:'center',opacity:100,visible:true,locked:false},
-{id:'homescore',name:'Home score',type:'text',x:458,y:260,w:40,h:30,text:'{home_score}',fill:'#ffffff',font:'Lilita One',fontSize:40,weight:900,align:'center',opacity:100,visible:true,locked:false},
-{id:'clock',name:'Clock',type:'text',x:366,y:248,w:80,h:22,text:'{clock}',fill:'#ffffff',font:'Lilita One',fontSize:20,weight:800,align:'center',opacity:100,visible:true,locked:false},
-{id:'quarter',name:'Quarter',type:'text',x:366,y:276,w:80,h:20,text:'{quarter}',fill:'#d8d8d8',font:'Lilita One',fontSize:13,weight:700,align:'center',opacity:100,visible:true,locked:false},
-{id:'down',name:'Down & distance',type:'text',x:366,y:218,w:130,h:20,text:'{down_distance}',fill:'#d8d8d8',font:'Lilita One',fontSize:13,weight:700,align:'center',opacity:100,visible:true,locked:false}
+{id:'awayname',name:'Away team name',type:'text',x:112,y:201,w:180,h:24,text:'{away_rank} {away_name}',fill:'#ffffff',font:'retro-bowl',fontSize:16,weight:800,align:'left',letterSpacing:0,opacity:100,visible:true,locked:false},
+{id:'homename',name:'Home team name',type:'text',x:620,y:201,w:180,h:24,text:'{home_rank} {home_name}',fill:'#ffffff',font:'retro-bowl',fontSize:16,weight:800,align:'right',letterSpacing:0,opacity:100,visible:true,locked:false},
+{id:'awayscore',name:'Away score',type:'text',x:274,y:260,w:40,h:30,text:'{away_score}',fill:'#ffffff',font:'retro-bowl',fontSize:40,weight:900,align:'center',opacity:100,visible:true,locked:false},
+{id:'homescore',name:'Home score',type:'text',x:458,y:260,w:40,h:30,text:'{home_score}',fill:'#ffffff',font:'retro-bowl',fontSize:40,weight:900,align:'center',opacity:100,visible:true,locked:false},
+{id:'clock',name:'Clock',type:'text',x:366,y:248,w:80,h:22,text:'{clock}',fill:'#ffffff',font:'retro-bowl',fontSize:20,weight:800,align:'center',opacity:100,visible:true,locked:false},
+{id:'quarter',name:'Quarter',type:'text',x:366,y:276,w:80,h:20,text:'{quarter}',fill:'#d8d8d8',font:'retro-bowl',fontSize:13,weight:700,align:'center',opacity:100,visible:true,locked:false},
+{id:'down',name:'Down & distance',type:'text',x:366,y:218,w:130,h:20,text:'{down_distance}',fill:'#d8d8d8',font:'retro-bowl',fontSize:13,weight:700,align:'center',opacity:100,visible:true,locked:false}
 ];
 function clone(v){return JSON.parse(JSON.stringify(v))}
 function uid(){return 'layer_'+Math.random().toString(36).slice(2,10)}
@@ -133,7 +133,7 @@ function gradient(e,x,y,w,h){
 }
 function pathRound(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,Math.max(0,Math.min(r,w/2,h/2)))}
 function drawText(e){
- const fs=Number(e.fontSize)||20,weight=e.weight||700,font=e.font||'Lilita One';
+ const fs=Number(e.fontSize)||20,weight=e.weight||700,font=e.font==='retro-bowl'?'Lilita One':(e.font||'Lilita One');
  ctx.font=weight+' '+fs+'px "'+font+'"';ctx.textBaseline='middle';ctx.textAlign=e.align||'left';
  let tx=e.align==='center'?e.x+e.w/2:e.align==='right'?e.x+e.w:e.x;
  let txt=expanded(e.text||'');let m=String(e.text||'').match(/^\{(away_score|home_score)\}$/);if(m&&scorePreviewValues[m[1]]!==undefined&&e.animation?.enabled!==false)txt=String(scorePreviewValues[m[1]]);let lines=txt.split('\n'),lh=fs*(Number(e.lineHeight)||1.1);
@@ -194,7 +194,7 @@ function mutate(e,k,v){snapshot();e[k]=v;syncInspector()}
 function add(type,x=120,y=90){
  snapshot();let e={id:uid(),name:type[0].toUpperCase()+type.slice(1)+' '+(els.length+1),type,x,y,w:type==='text'?170:120,h:type==='text'?34:60,fill:type==='text'?'#ffffff':'#284a70',stroke:'#ffffff',strokeWidth:type==='line'?2:0,opacity:100,visible:true,locked:false};
  if(type==='roundrect'){e.radius=10;e.gradient={type:'linear',a:'#416c9c',b:'#14283f',angle:90,mid:50}}
- if(type==='text')Object.assign(e,{text:'EDIT TEXT',font:'Lilita One',fontSize:24,weight:800,align:'center'});
+ if(type==='text')Object.assign(e,{text:'EDIT TEXT',font:'retro-bowl',fontSize:24,weight:800,align:'center'});
  if(type==='pen')Object.assign(e,{points:[[x,y],[x+1,y+1]]});
  if(type==='image')Object.assign(e,{src:'',fit:'stretch'});
  els.push(e);selected=[e.id];tool='select';setTool('select');syncInspector()
@@ -244,7 +244,7 @@ $('opacity').oninput=()=>{$('opacityLabel').textContent=$('opacity').value+'%'};
 ['fillColor','fillSource','teamShade','gradA','gradB','gradMid','gradAngle','strokeColor','strokeWidth','opacity','radius','shadow','shadowColor','shadowBlur','shadowX','shadowY'].forEach(id=>bindProp(id,applyFill));
 ['textContent','font','fontSize','fontWeight','textAlign','letterSpacing','lineHeight'].forEach(id=>bindProp(id,()=>{let e=els.find(x=>x.id===selected[selected.length-1]);if(!e||e.type!=='text')return;snapshot();e.text=$('textContent').value;e.font=$('font').value;e.fontSize=Number($('fontSize').value);e.weight=Number($('fontWeight').value);e.align=$('textAlign').value;e.letterSpacing=Number($('letterSpacing').value);e.lineHeight=Number($('lineHeight').value);render()}));
 function loadInspectorToControls(){let e=els.find(x=>x.id===selected[selected.length-1]);if(!e)return;$('fillSource').value=e.fillMode||'fixed';$('teamShade').value=e.teamShade||0;$('teamShadeLabel').textContent=$('teamShade').value;$('fillType').value=e.gradient?.type||'solid';$('solidControls').hidden=!!e.gradient;$('gradientControls').hidden=!e.gradient;$('fillColor').value=e.fill||'#ffffff';$('fillColor').disabled=(e.fillMode||'fixed')!=='fixed';$('gradA').value=e.gradient?.a||e.fill||'#ffffff';$('gradB').value=e.gradient?.b||'#111111';$('gradAngle').value=e.gradient?.angle||0;$('angleLabel').textContent=$('gradAngle').value+'°';$('gradMid').value=e.gradient?.mid||50;$('strokeColor').value=e.stroke||'#ffffff';$('strokeWidth').value=e.strokeWidth||0;$('opacity').value=e.opacity??100;$('opacityLabel').textContent=$('opacity').value+'%';$('radius').value=e.radius||0;$('shadow').checked=!!e.shadow;$('shadowColor').value=e.shadowColor||'#000000';$('shadowBlur').value=e.shadowBlur||12;$('shadowX').value=e.shadowX||0;$('shadowY').value=e.shadowY||0;
- if(e.type==='text'){$('textContent').value=e.text||'';$('font').value=e.font||'Lilita One';$('fontSize').value=e.fontSize||24;$('fontWeight').value=e.weight||700;$('textAlign').value=e.align||'center';$('letterSpacing').value=e.letterSpacing||0;$('lineHeight').value=e.lineHeight||1.1}}
+ if(e.type==='text'){$('textContent').value=e.text||'';$('font').value=e.font||'retro-bowl';$('fontSize').value=e.fontSize||24;$('fontWeight').value=e.weight||700;$('textAlign').value=e.align||'center';$('letterSpacing').value=e.letterSpacing||0;$('lineHeight').value=e.lineHeight||1.1}}
 const oldSync=syncInspector;syncInspector=function(){oldSync();loadInspectorToControls();syncScoreAnimationControls()};
 function selectedScoreLayers(){return els.filter(e=>selected.includes(e.id)&&e.type==='text'&&/^\{(away_score|home_score)\}$/.test(String(e.text||'')))}
 function syncScoreAnimationControls(){let a=selectedScoreLayers(),e=a[a.length-1],cfg=e?.animation||{enabled:true,duration:900,style:'count',ease:'out'};$('scoreAnimEnabled').checked=cfg.enabled!==false;$('scoreAnimDuration').value=cfg.duration||900;$('scoreAnimDurationLabel').textContent=$('scoreAnimDuration').value+' ms';$('scoreAnimStyle').value=cfg.style||'count';$('scoreAnimEase').value=cfg.ease||'out'}
@@ -317,7 +317,7 @@ function expand(text,d,inst,e){
   return d[k]===undefined?m:String(d[k]);
  });
 }
-function drawElement(e,d,inst,other,sx,sy,scale){
+function drawElement(e,d,inst,other,sx,sy,scale,textScaleFactor){
  var x=sx+Number(e.x||0)*scale,y=sy+Number(e.y||0)*scale,w=Number(e.w||0)*scale,h=Number(e.h||0)*scale;
  var alpha=Math.max(0,Math.min(1,(e.opacity==null?100:Number(e.opacity))/100));
  if(alpha<=0)return;
@@ -326,7 +326,7 @@ function drawElement(e,d,inst,other,sx,sy,scale){
  if(e.type==="text"){
   var txt=expand(e.text,d,inst,e),align=e.align==="center"?1:e.align==="right"?2:0;
   draw_set_font(global.gmlfnt_small_flex);draw_set_halign(align);draw_set_valign(1);
-  var fs=Math.max(.1,Number(e.fontSize||20)/20)*scale*(global.gmlhd_fonts?0.25:1);
+  var fs=Math.max(.05,Number(e.fontSize||20)/20)*(global.gmlhd_fonts?0.25:1)*textScaleFactor;
   var tx=e.align==="center"?x+w/2:e.align==="right"?x+w:x;
   draw_text_transformed(tx,y+h/2,txt,fs,fs,0);
  }else if(e.type==="line"){
@@ -353,10 +353,13 @@ function install(){
    if(global.gmldebug_aa_hide_ui)return;
    var gw=display_get_gui_width(),gh=display_get_gui_height(),cw=LAYOUT.canvas[0],ch=LAYOUT.canvas[1];
    if(!(gw>0&&gh>0&&cw>0&&ch>0))return;
-   var scale=Math.min(gw/cw,(gh-8)/ch),sx=(gw-cw*scale)/2,sy=gh-ch*scale-4;
+   var baseScale=Math.min(1.25,gw/cw,gh/ch);
+   var scale=baseScale*0.38;
+   var textScaleFactor=baseScale/0.8;
+   var sx=(gw-cw*scale)/2,sy=gh-ch*scale-4;
    var d=gameData(inst,other);
    draw_set_alpha(1);draw_set_halign(0);draw_set_valign(1);
-   for(var i=0;i<LAYOUT.elements.length;i++)drawElement(LAYOUT.elements[i],d,inst,other,sx,sy,scale);
+   for(var i=0;i<LAYOUT.elements.length;i++)drawElement(LAYOUT.elements[i],d,inst,other,sx,sy,scale,textScaleFactor);
   }catch(err){logOnce("draw","Scorebug drawing failed: "+(err&&err.stack||err))}
   finally{draw_set_alpha(1);draw_set_color(16777215);draw_set_halign(0);draw_set_valign(1)}
  };
@@ -369,7 +372,7 @@ retry=setInterval(install,50);install();
 $('exportSpec').onclick=()=>{let spec='// Retro Bowl Scorebug Studio — editable design specification\\nconst SCOREBUG_SPEC = '+JSON.stringify(exportProject(),null,2)+';\\n';download('scorebug-spec.js',spec,'text/javascript');toast('Exported editable specification')};
 $('export').onclick=()=>{download('custom_scorebug.js',generateGameMod(),'text/javascript');toast('Exported installable game mod')};
 $('open').onclick=()=>{let inp=document.createElement('input');inp.type='file';inp.accept='.json,application/json';inp.onchange=()=>{let f=inp.files[0];if(!f)return;let rd=new FileReader();rd.onload=()=>{try{let obj=JSON.parse(rd.result);els=(obj.elements||obj.layers||[]).map((e,i)=>normalize(e,i));let cv=obj.canvas;if(Array.isArray(cv)){c.width=cv[0]||732;c.height=cv[1]||338}else if(cv){c.width=cv.width||732;c.height=cv.height||338}$('cw').value=c.width;$('ch').value=c.height;selected=[];history=[];future=[];render();syncInspector();toast('Project imported')}catch(err){alert('Could not open project: '+err.message)}};rd.readAsText(f)};inp.click()};
-function normalize(e,i){let n=clone(e);n.id=n.id||uid();n.name=n.name||'Layer '+(i+1);if(n.type==='image'&&n.src){let im=new Image();im.onload=()=>render();im.src=n.src;imageCache.set(n.id,im)}n.x=Number(n.x)||0;n.y=Number(n.y)||0;n.w=Number(n.w)||0;n.h=Number(n.h)||0;n.opacity=n.opacity??(n.alpha!==undefined?n.alpha*100:100);n.stroke=n.stroke||n.outline||'#ffffff';n.strokeWidth=n.strokeWidth??n.width??0;n.fill=n.fill||n.color||'#ffffff';n.type=n.type==='roundrect'?'roundrect':n.type||'rect';if(n.font_scale!==undefined)n.fontSize=10*n.font_scale;if(n.color_mode==='Away team')n.fillMode='away';if(n.color_mode==='Home team')n.fillMode='home';if(n.fill_mode==='Away team')n.fillMode='away';if(n.fill_mode==='Home team')n.fillMode='home';if(n.type==='text'){n.weight=n.weight||700;n.font=n.font||'Lilita One';n.fontSize=n.fontSize||24}return n}
+function normalize(e,i){let n=clone(e);n.id=n.id||uid();n.name=n.name||'Layer '+(i+1);if(n.type==='image'&&n.src){let im=new Image();im.onload=()=>render();im.src=n.src;imageCache.set(n.id,im)}n.x=Number(n.x)||0;n.y=Number(n.y)||0;n.w=Number(n.w)||0;n.h=Number(n.h)||0;n.opacity=n.opacity??(n.alpha!==undefined?n.alpha*100:100);n.stroke=n.stroke||n.outline||'#ffffff';n.strokeWidth=n.strokeWidth??n.width??0;n.fill=n.fill||n.color||'#ffffff';n.type=n.type==='roundrect'?'roundrect':n.type||'rect';if(n.font_scale!==undefined)n.fontSize=10*n.font_scale;if(n.color_mode==='Away team')n.fillMode='away';if(n.color_mode==='Home team')n.fillMode='home';if(n.fill_mode==='Away team')n.fillMode='away';if(n.fill_mode==='Home team')n.fillMode='home';if(n.type==='text'){n.weight=n.weight||700;n.font=n.font||'retro-bowl';n.fontSize=n.fontSize||24}return n}
 $('imageFile').onchange=ev=>{let f=ev.target.files[0];if(!f)return;let rd=new FileReader();rd.onload=()=>{let id=uid(),im=new Image();im.onload=()=>{imageCache.set(id,im);snapshot();els.push({id,name:f.name,type:'image',src:rd.result,x:100,y:80,w:Math.min(180,im.width),h:Math.min(120,im.height),opacity:100,visible:true,locked:false});selected=[id];syncInspector()};im.src=rd.result};rd.readAsDataURL(f);ev.target.value=''};
 $('importImage').onclick=()=>$('imageFile').click();
 $('new').onclick=()=>{if(confirm('Start a new blank scorebug?')){snapshot();els=[];selected=[];syncInspector()}};
