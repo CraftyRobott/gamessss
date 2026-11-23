@@ -160,14 +160,14 @@ function renderLayers(){
  [...els].map((e,i)=>({e,i})).reverse().forEach(({e,i})=>{
   if(e.group&&groups.includes(e.group)&&!shownGroups.has(e.group)){
    let header=document.createElement('div');header.className='layer-row group';header.innerHTML='<span>▾</span><span class="name"></span><span class="pill">GROUP</span>';
-   header.querySelector('.name').textContent=e.group;header.onclick=()=>{selected=els.filter(x=>x.group===e.group).map(x=>x.id);render()};box.appendChild(header);shownGroups.add(e.group);
+   header.querySelector('.name').textContent=e.group;header.onclick=()=>{selected=els.filter(x=>x.group===e.group).map(x=>x.id);syncInspector()};box.appendChild(header);shownGroups.add(e.group);
   }
   let row=document.createElement('div');row.className='layer-row'+(selected.includes(e.id)?' sel':'')+(e.locked?' locked':'')+(e.group?' child':'');
   let vis=document.createElement('button');vis.className='mini';vis.textContent=e.visible===false?'◌':'◉';vis.title='Toggle visibility';vis.onclick=ev=>{ev.stopPropagation();snapshot();e.visible=e.visible===false;render()};
   let lock=document.createElement('button');lock.className='mini';lock.textContent=e.locked?'🔒':'◇';lock.title='Toggle lock';lock.onclick=ev=>{ev.stopPropagation();snapshot();e.locked=!e.locked;render()};
   let nm=document.createElement('span');nm.className='name';nm.textContent=e.name||e.type;
   let type=document.createElement('span');type.className='pill';type.textContent=e.type;
-  row.append(vis,lock,nm,type);row.onclick=ev=>{if(ev.ctrlKey||ev.metaKey||ev.shiftKey){selected=selected.includes(e.id)?selected.filter(x=>x!==e.id):[...selected,e.id]}else selected=[e.id];render()};
+  row.append(vis,lock,nm,type);row.onclick=ev=>{if(ev.ctrlKey||ev.metaKey||ev.shiftKey){selected=selected.includes(e.id)?selected.filter(x=>x!==e.id):[...selected,e.id]}else selected=[e.id];syncInspector()};
   box.appendChild(row);
  });
 }
