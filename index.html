@@ -4,6 +4,8 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Retro Bowl Scorebug Studio</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Lilita+One&display=swap');
+
 :root{color-scheme:dark;--bg:#101319;--panel:#181e28;--panel2:#202938;--line:#303b4b;--muted:#9ba8b8;--text:#edf2f8;--blue:#75a7ff;--accent:#e3ad54}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:13px/1.4 Inter,Segoe UI,Arial,sans-serif;overflow:hidden}
 button,input,select,textarea{font:inherit}button{background:#263244;color:var(--text);border:1px solid #3a485c;border-radius:6px;padding:7px 9px;cursor:pointer}button:hover{border-color:var(--blue);background:#30415a}button:disabled{opacity:.35;cursor:default}.primary{background:#315fae;border-color:#4779c8}.danger{color:#ff9c9c}.active{background:#34527a!important;border-color:#75a7ff!important}
@@ -76,12 +78,12 @@ details summary{cursor:pointer;color:#cbd5e1;font-size:11px;font-weight:700;padd
 <div class="field"><label>Shadow</label><div class="row"><label class="muted"><input id="shadow" type="checkbox"> Enable</label><input id="shadowColor" type="color" value="#000000"></div><div class="row"><input id="shadowBlur" type="number" min="0" max="80" value="12" title="Blur"><input id="shadowX" type="number" value="0" title="X offset"><input id="shadowY" type="number" value="4" title="Y offset"></div></div>
 </div></div>
 <div><h3>Text / dynamic data</h3><div class="panel"><div class="field"><label>Text content</label><textarea id="textContent" rows="2" placeholder="Select a text layer"></textarea></div>
-<div class="row"><div class="field"><label>Font</label><select id="font"><option>Arial</option><option>Arial Narrow</option><option>Impact</option><option>Georgia</option><option>Verdana</option><option>Trebuchet MS</option><option>Courier New</option></select></div><div class="field"><label>Size</label><input id="fontSize" type="number" min="5" max="180" value="24"></div></div>
+<div class="row"><div class="field"><label>Font</label><select id="font"><option>Lilita One</option><option>Arial</option><option>Arial Narrow</option><option>Impact</option><option>Georgia</option><option>Verdana</option><option>Trebuchet MS</option><option>Courier New</option></select></div><div class="field"><label>Size</label><input id="fontSize" type="number" min="5" max="180" value="24"></div></div>
 <div class="row"><div class="field"><label>Weight</label><select id="fontWeight"><option value="400">Regular</option><option value="600">Semibold</option><option value="700">Bold</option><option value="800">Extra bold</option><option value="900">Black</option></select></div><div class="field"><label>Align</label><select id="textAlign"><option>left</option><option selected>center</option><option>right</option></select></div></div>
 <div class="row"><div class="field"><label>Letter spacing</label><input id="letterSpacing" type="number" value="0"></div><div class="field"><label>Line height</label><input id="lineHeight" type="number" value="1.1" step=".1"></div></div>
 <div class="field"><label>Preview token data</label><select id="samplePreset"><option value="default">SEC matchup sample</option><option value="close">Close game</option><option value="blowout">Blowout</option></select></div>
 <div class="token-grid" id="tokens"></div></div>
-<div class="panel"><h3>Quick layout</h3><div class="row"><button id="alignLeft">Align left</button><button id="alignCenter">Center X</button><button id="alignRight">Align right</button></div><div class="row" style="margin-top:5px"><button id="alignTop">Top</button><button id="alignMiddle">Center Y</button><button id="alignBottom">Bottom</button></div></div>
+<div class="panel"><h3>Score animations</h3><div class="field"><label><input id="scoreAnimEnabled" type="checkbox" checked> Enable score count-up</label></div><div class="field"><label>Roll duration <b id="scoreAnimDurationLabel">900 ms</b></label><input id="scoreAnimDuration" type="range" min="200" max="2400" step="50" value="900"></div><div class="field"><label>Number roll style</label><select id="scoreAnimStyle"><option value="count">Smooth count-up</option><option value="odometer">Odometer-style roll</option><option value="snap">Fast count + settle</option></select></div><div class="field"><label>Ease</label><select id="scoreAnimEase"><option value="out">Ease out</option><option value="linear">Linear</option><option value="bounce">Soft overshoot</option></select></div><div class="row"><button id="previewScoreAnim" class="primary">Preview score increase</button><button id="resetScoreAnim">Reset</button></div><p class="muted">Applies to selected Away/Home score text layers. Export stores these settings for game-mod translation.</p></div><div class="panel"><h3>Quick layout</h3><div class="row"><button id="alignLeft">Align left</button><button id="alignCenter">Center X</button><button id="alignRight">Align right</button></div><div class="row" style="margin-top:5px"><button id="alignTop">Top</button><button id="alignMiddle">Center Y</button><button id="alignBottom">Bottom</button></div></div>
 </div>
 </aside>
 </main><div class="toast" id="toast"></div>
@@ -99,9 +101,9 @@ const starter=[
 {id:'base',name:'Main background',type:'roundrect',x:95,y:222,w:542,h:76,fill:'#101B2D',stroke:'#263b58',strokeWidth:1,radius:10,opacity:96,visible:true,locked:false,gradient:null,shadow:true,shadowColor:'#000000',shadowBlur:12,shadowX:0,shadowY:4},
 {id:'away',name:'Away panel',type:'roundrect',x:95,y:222,w:210,h:76,fill:'#344E72',fillMode:'away',stroke:'#ffffff',strokeWidth:0,radius:8,opacity:100,visible:true,locked:false,gradient:{type:'linear',a:'#5478a4',b:'#1e3555',angle:90,mid:50}},
 {id:'home',name:'Home panel',type:'roundrect',x:427,y:222,w:210,h:76,fill:'#7B3030',fillMode:'home',stroke:'#ffffff',strokeWidth:0,radius:8,opacity:100,visible:true,locked:false,gradient:{type:'linear',a:'#b64a54',b:'#551c2b',angle:90,mid:50}},
-{id:'awayname',name:'Away team name',type:'text',x:112,y:201,w:180,h:24,text:'{away_rank} {away_name}',fill:'#ffffff',font:'Arial Narrow',fontSize:16,weight:800,align:'left',letterSpacing:0,opacity:100,visible:true,locked:false},
+{id:'awayname',name:'Away team name',type:'text',x:112,y:201,w:180,h:24,text:'{away_rank} {away_name}',fill:'#ffffff',font:'Lilita One',fontSize:16,weight:800,align:'left',letterSpacing:0,opacity:100,visible:true,locked:false},
 {id:'homename',name:'Home team name',type:'text',x:620,y:201,w:180,h:24,text:'{home_rank} {home_name}',fill:'#ffffff',font:'Arial Narrow',fontSize:16,weight:800,align:'right',letterSpacing:0,opacity:100,visible:true,locked:false},
-{id:'awayscore',name:'Away score',type:'text',x:274,y:260,w:40,h:30,text:'{away_score}',fill:'#ffffff',font:'Impact',fontSize:40,weight:900,align:'center',opacity:100,visible:true,locked:false},
+{id:'awayscore',name:'Away score',type:'text',x:274,y:260,w:40,h:30,text:'{away_score}',fill:'#ffffff',font:'Lilita One',fontSize:40,weight:900,align:'center',opacity:100,visible:true,locked:false},
 {id:'homescore',name:'Home score',type:'text',x:458,y:260,w:40,h:30,text:'{home_score}',fill:'#ffffff',font:'Impact',fontSize:40,weight:900,align:'center',opacity:100,visible:true,locked:false},
 {id:'clock',name:'Clock',type:'text',x:366,y:248,w:80,h:22,text:'{clock}',fill:'#ffffff',font:'Arial',fontSize:20,weight:800,align:'center',opacity:100,visible:true,locked:false},
 {id:'quarter',name:'Quarter',type:'text',x:366,y:276,w:80,h:20,text:'{quarter}',fill:'#d8d8d8',font:'Arial',fontSize:13,weight:700,align:'center',opacity:100,visible:true,locked:false},
@@ -130,7 +132,7 @@ function drawText(e){
  const fs=Number(e.fontSize)||20,weight=e.weight||700,font=e.font||'Arial';
  ctx.font=weight+' '+fs+'px "'+font+'"';ctx.textBaseline='middle';ctx.textAlign=e.align||'left';
  let tx=e.align==='center'?e.x+e.w/2:e.align==='right'?e.x+e.w:e.x;
- let txt=expanded(e.text||'');let lines=txt.split('\n'),lh=fs*(Number(e.lineHeight)||1.1);
+ let txt=expanded(e.text||'');if(e.animation?.enabled){let m=String(e.text||'').match(/^\{(away_score|home_score)\}$/);if(m&&scorePreviewValues[m[1]]!==undefined)txt=String(scorePreviewValues[m[1]])}let lines=txt.split('\\n'),lh=fs*(Number(e.lineHeight)||1.1);
  lines.forEach((line,i)=>{let y=e.y+e.h/2+(i-(lines.length-1)/2)*lh;let spacing=Number(e.letterSpacing)||0;
  if(!spacing)ctx.fillText(line,tx,y,e.w);
  else{let width=[...line].reduce((a,ch)=>a+ctx.measureText(ch).width+spacing,0)-spacing;let xx=e.align==='center'?tx-width/2:e.align==='right'?tx-width:tx;for(const ch of line){ctx.fillText(ch,xx,y);xx+=ctx.measureText(ch).width+spacing}}});
@@ -153,7 +155,7 @@ function render(){
  });
  if(guideOn){ctx.save();ctx.strokeStyle='#8db8ff88';ctx.setLineDash([8,6]);ctx.strokeRect(c.width*.05,c.height*.08,c.width*.9,c.height*.84);ctx.beginPath();ctx.moveTo(c.width/2,0);ctx.lineTo(c.width/2,c.height);ctx.stroke();ctx.restore()}
 }
-let imageCache=new Map();
+let imageCache=new Map(),scorePreviewValues={},scorePreviewFrame=0;
 function renderLayers(){
  const box=$('layers');box.innerHTML='';let groups=[...new Set(els.map(e=>e.group).filter(Boolean))],shownGroups=new Set();
  // Visual layer order is bottom-to-top in the data; list shows top-to-bottom.
@@ -188,7 +190,7 @@ function mutate(e,k,v){snapshot();e[k]=v;syncInspector()}
 function add(type,x=120,y=90){
  snapshot();let e={id:uid(),name:type[0].toUpperCase()+type.slice(1)+' '+(els.length+1),type,x,y,w:type==='text'?170:120,h:type==='text'?34:60,fill:type==='text'?'#ffffff':'#284a70',stroke:'#ffffff',strokeWidth:type==='line'?2:0,opacity:100,visible:true,locked:false};
  if(type==='roundrect'){e.radius=10;e.gradient={type:'linear',a:'#416c9c',b:'#14283f',angle:90,mid:50}}
- if(type==='text')Object.assign(e,{text:'EDIT TEXT',font:'Arial',fontSize:24,weight:800,align:'center'});
+ if(type==='text')Object.assign(e,{text:'EDIT TEXT',font:'Lilita One',fontSize:24,weight:800,align:'center'});
  if(type==='pen')Object.assign(e,{points:[[x,y],[x+1,y+1]]});
  if(type==='image')Object.assign(e,{src:'',fit:'stretch'});
  els.push(e);selected=[e.id];tool='select';setTool('select');syncInspector()
@@ -239,8 +241,16 @@ $('opacity').oninput=()=>{$('opacityLabel').textContent=$('opacity').value+'%'};
 ['textContent','font','fontSize','fontWeight','textAlign','letterSpacing','lineHeight'].forEach(id=>bindProp(id,()=>{let e=els.find(x=>x.id===selected[selected.length-1]);if(!e||e.type!=='text')return;snapshot();e.text=$('textContent').value;e.font=$('font').value;e.fontSize=Number($('fontSize').value);e.weight=Number($('fontWeight').value);e.align=$('textAlign').value;e.letterSpacing=Number($('letterSpacing').value);e.lineHeight=Number($('lineHeight').value);render()}));
 function loadInspectorToControls(){let e=els.find(x=>x.id===selected[selected.length-1]);if(!e)return;$('fillType').value=e.gradient?.type||'solid';$('solidControls').hidden=!!e.gradient;$('gradientControls').hidden=!e.gradient;$('fillColor').value=e.fill||'#ffffff';$('gradA').value=e.gradient?.a||e.fill||'#ffffff';$('gradB').value=e.gradient?.b||'#111111';$('gradAngle').value=e.gradient?.angle||0;$('angleLabel').textContent=$('gradAngle').value+'°';$('gradMid').value=e.gradient?.mid||50;$('strokeColor').value=e.stroke||'#ffffff';$('strokeWidth').value=e.strokeWidth||0;$('opacity').value=e.opacity??100;$('opacityLabel').textContent=$('opacity').value+'%';$('radius').value=e.radius||0;$('shadow').checked=!!e.shadow;$('shadowColor').value=e.shadowColor||'#000000';$('shadowBlur').value=e.shadowBlur||12;$('shadowX').value=e.shadowX||0;$('shadowY').value=e.shadowY||0;
  if(e.type==='text'){$('textContent').value=e.text||'';$('font').value=e.font||'Arial';$('fontSize').value=e.fontSize||24;$('fontWeight').value=e.weight||700;$('textAlign').value=e.align||'center';$('letterSpacing').value=e.letterSpacing||0;$('lineHeight').value=e.lineHeight||1.1}}
-const oldSync=syncInspector;syncInspector=function(){oldSync();loadInspectorToControls()};
-function exportProject(){return {format:'RetroBowlScorebugStudio',version:2,canvas:[c.width,c.height],elements:els.map(e=>{let x={...e};delete x._groupHeaderShown;return x})}}
+const oldSync=syncInspector;syncInspector=function(){oldSync();loadInspectorToControls();syncScoreAnimationControls()};
+function selectedScoreLayers(){return els.filter(e=>selected.includes(e.id)&&e.type==='text'&&/^\{(away_score|home_score)\}$/.test(String(e.text||'')))}
+function syncScoreAnimationControls(){let a=selectedScoreLayers(),e=a[a.length-1],cfg=e?.animation||{enabled:true,duration:900,style:'count',ease:'out'};$('scoreAnimEnabled').checked=cfg.enabled!==false;$('scoreAnimDuration').value=cfg.duration||900;$('scoreAnimDurationLabel').textContent=$('scoreAnimDuration').value+' ms';$('scoreAnimStyle').value=cfg.style||'count';$('scoreAnimEase').value=cfg.ease||'out'}
+function applyScoreAnimation(){let a=selectedScoreLayers();if(!a.length){toast('Select an Away score or Home score text layer first');return}snapshot();let cfg={enabled:$('scoreAnimEnabled').checked,duration:Number($('scoreAnimDuration').value),style:$('scoreAnimStyle').value,ease:$('scoreAnimEase').value};a.forEach(e=>e.animation={...cfg});syncInspector();toast('Score animation settings applied')}
+function previewScoreAnimation(){let a=selectedScoreLayers();if(!a.length){toast('Select an Away score or Home score layer first');return}let e=a[a.length-1],key=String(e.text).match(/^\{(away_score|home_score)\}$/)?.[1];if(!key)return;let target=Number(data[key])||0,start=Math.max(0,target-7),duration=Number(e.animation?.duration||$('scoreAnimDuration').value||900),style=e.animation?.style||$('scoreAnimStyle').value,ease=e.animation?.ease||$('scoreAnimEase').value,begin=performance.now();cancelAnimationFrame(scorePreviewFrame);function tick(now){let t=Math.min(1,(now-begin)/duration),p=ease==='linear'?t:ease==='bounce'?Math.min(1,t+Math.sin(t*Math.PI)*.08):1-Math.pow(1-t,3);if(style==='snap')p=t<.72?Math.min(1,t/.72):1;scorePreviewValues[key]=Math.round(start+(target-start)*p);render();if(t<1)scorePreviewFrame=requestAnimationFrame(tick);else{delete scorePreviewValues[key];render()}}scorePreviewFrame=requestAnimationFrame(tick)}
+$('scoreAnimDuration').oninput=()=>{$('scoreAnimDurationLabel').textContent=$('scoreAnimDuration').value+' ms'};
+$('previewScoreAnim').onclick=previewScoreAnimation;
+$('resetScoreAnim').onclick=()=>{let a=selectedScoreLayers();if(!a.length){toast('Select a score layer first');return}snapshot();a.forEach(e=>delete e.animation);syncInspector();toast('Score animation reset')};
+['scoreAnimEnabled','scoreAnimDuration','scoreAnimStyle','scoreAnimEase'].forEach(id=>$(id).addEventListener('change',applyScoreAnimation));
+function exportProject(){return {format:'RetroBowlScorebugStudio',version:3,canvas:[c.width,c.height],elements:els.map(e=>{let x={...e};delete x._groupHeaderShown;return x})}}
 function download(name,content,mime){let a=document.createElement('a'),u=URL.createObjectURL(new Blob([content],{type:mime}));a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
 $('save').onclick=()=>download('scorebug-project.json',JSON.stringify(exportProject(),null,2),'application/json');
 $('export').onclick=()=>{let spec='// Retro Bowl Scorebug Studio — editable design specification\n// Includes gradients, layers, groups, geometry, and appearance.\nconst SCOREBUG_SPEC = '+JSON.stringify(exportProject(),null,2)+';\n';download('scorebug-spec.js',spec,'text/javascript');toast('Exported JS design specification')};
