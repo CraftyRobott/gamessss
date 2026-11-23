@@ -10,7 +10,7 @@
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:13px/1.4 Inter,Segoe UI,Arial,sans-serif;overflow:hidden}
 button,input,select,textarea{font:inherit}button{background:#263244;color:var(--text);border:1px solid #3a485c;border-radius:6px;padding:7px 9px;cursor:pointer}button:hover{border-color:var(--blue);background:#30415a}button:disabled{opacity:.35;cursor:default}.primary{background:#315fae;border-color:#4779c8}.danger{color:#ff9c9c}.active{background:#34527a!important;border-color:#75a7ff!important}
 header{height:52px;display:flex;align-items:center;gap:12px;padding:0 14px;border-bottom:1px solid var(--line);background:#151a22}
-.brand{font-weight:850;letter-spacing:.07em;white-space:nowrap}.brand b{color:#8db8ff}.top-actions{display:flex;gap:6px;margin-left:auto}.sep{height:25px;border-left:1px solid var(--line);margin:0 3px}
+.brand{font-family:'Lilita One',sans-serif;font-weight:850;letter-spacing:.07em;white-space:nowrap}.brand b{color:#8db8ff}.top-actions{display:flex;gap:6px;margin-left:auto}.sep{height:25px;border-left:1px solid var(--line);margin:0 3px}
 main{height:calc(100vh - 52px);display:grid;grid-template-columns:260px minmax(400px,1fr) 290px}
 aside{background:var(--panel);overflow:auto;padding:12px}.left{border-right:1px solid var(--line)}.right{border-left:1px solid var(--line)}
 h3{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin:5px 0 10px}
@@ -102,9 +102,9 @@ const starter=[
 {id:'away',name:'Away panel',type:'roundrect',x:95,y:222,w:210,h:76,fill:'#344E72',fillMode:'away',stroke:'#ffffff',strokeWidth:0,radius:8,opacity:100,visible:true,locked:false,gradient:{type:'linear',a:'#5478a4',b:'#1e3555',angle:90,mid:50}},
 {id:'home',name:'Home panel',type:'roundrect',x:427,y:222,w:210,h:76,fill:'#7B3030',fillMode:'home',stroke:'#ffffff',strokeWidth:0,radius:8,opacity:100,visible:true,locked:false,gradient:{type:'linear',a:'#b64a54',b:'#551c2b',angle:90,mid:50}},
 {id:'awayname',name:'Away team name',type:'text',x:112,y:201,w:180,h:24,text:'{away_rank} {away_name}',fill:'#ffffff',font:'Lilita One',fontSize:16,weight:800,align:'left',letterSpacing:0,opacity:100,visible:true,locked:false},
-{id:'homename',name:'Home team name',type:'text',x:620,y:201,w:180,h:24,text:'{home_rank} {home_name}',fill:'#ffffff',font:'Arial Narrow',fontSize:16,weight:800,align:'right',letterSpacing:0,opacity:100,visible:true,locked:false},
+{id:'homename',name:'Home team name',type:'text',x:620,y:201,w:180,h:24,text:'{home_rank} {home_name}',fill:'#ffffff',font:'Lilita One',fontSize:16,weight:800,align:'right',letterSpacing:0,opacity:100,visible:true,locked:false},
 {id:'awayscore',name:'Away score',type:'text',x:274,y:260,w:40,h:30,text:'{away_score}',fill:'#ffffff',font:'Lilita One',fontSize:40,weight:900,align:'center',opacity:100,visible:true,locked:false},
-{id:'homescore',name:'Home score',type:'text',x:458,y:260,w:40,h:30,text:'{home_score}',fill:'#ffffff',font:'Impact',fontSize:40,weight:900,align:'center',opacity:100,visible:true,locked:false},
+{id:'homescore',name:'Home score',type:'text',x:458,y:260,w:40,h:30,text:'{home_score}',fill:'#ffffff',font:'Lilita One',fontSize:40,weight:900,align:'center',opacity:100,visible:true,locked:false},
 {id:'clock',name:'Clock',type:'text',x:366,y:248,w:80,h:22,text:'{clock}',fill:'#ffffff',font:'Arial',fontSize:20,weight:800,align:'center',opacity:100,visible:true,locked:false},
 {id:'quarter',name:'Quarter',type:'text',x:366,y:276,w:80,h:20,text:'{quarter}',fill:'#d8d8d8',font:'Arial',fontSize:13,weight:700,align:'center',opacity:100,visible:true,locked:false},
 {id:'down',name:'Down & distance',type:'text',x:366,y:218,w:130,h:20,text:'{down_distance}',fill:'#d8d8d8',font:'Arial',fontSize:13,weight:700,align:'center',opacity:100,visible:true,locked:false}
