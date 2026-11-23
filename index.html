@@ -260,13 +260,13 @@ $('save').onclick=()=>download('scorebug-project.json',JSON.stringify(exportProj
 function generateGameMod(){
  const project=exportProject(),elements=project.elements.filter(e=>e.visible!==false);
  const payload=JSON.stringify({canvas:project.canvas,elements});
- return \`// @name Custom Retro Bowl Scorebug
+ return `// @name Custom Retro Bowl Scorebug
 // @description Custom scorebug exported from Retro Bowl Scorebug Studio.
 // @category presentation
 // Install as engine/mods/custom_scorebug.js
 (function(){
 "use strict";
-var LAYOUT=\${payload};
+var LAYOUT=${payload};
 var installed=false,attempts=0,retry=null,lastScores=[null,null],scoreRoll=[null,null];
 var warned={};
 function logOnce(k,msg){if(!warned[k]){warned[k]=true;console.warn("[Scorebug Studio] "+msg)}}
@@ -351,7 +351,7 @@ function install(){
  console.log("[Scorebug Studio] Custom scorebug installed.");
 }
 retry=setInterval(install,50);install();
-})();\`;
+})();`;
 }
 $('exportSpec').onclick=()=>{let spec='// Retro Bowl Scorebug Studio — editable design specification\\nconst SCOREBUG_SPEC = '+JSON.stringify(exportProject(),null,2)+';\\n';download('scorebug-spec.js',spec,'text/javascript');toast('Exported editable specification')};
 $('export').onclick=()=>{download('custom_scorebug.js',generateGameMod(),'text/javascript');toast('Exported installable game mod')};
